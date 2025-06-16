@@ -4,7 +4,7 @@
 \alias{computeOccupancyProbs}
 \title{computeOccupancyProbs}
 \usage{
-computeOccupancyProbs(fitmodel, confidence = 0.95)
+computeOccupancyProbs(fitmodel)
 }
 \arguments{
 \item{fitmodel}{Output from the function runOccPlus}

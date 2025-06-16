@@ -61,6 +61,7 @@ data {
   real b_theta0;
 
 }
+
 parameters {
 
   matrix[ncov_psi, S] beta_psi;

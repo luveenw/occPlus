@@ -5,30 +5,51 @@ logit <- function(x){
 
 logistic <- function(x) 1 / (1 + exp(-x))
 
-plotSpeciesRates <- function(data_plot,
-                             orderSpecies,
-                             subset){
 
-  data_plot %>%
-    filter(Species %in% speciesNames[orderSpecies[subset]]) %>%
-    ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
-               ymin = `2.5%`,
-               ymax = `97.5%`)) + geom_errorbar() +
-    xlab("Species") +
-    # ylim(c(0,1)) +
-    ggtitle("Collection rates") +
-    theme_bw() +
-    ylim(c(0,1)) +
-    theme(
-      axis.text = element_text(angle = 90,
-                               size = 8),
-      plot.title = element_text(hjust = .5,
-                                size = 15)
-    )
+#' returnOccupancyCovariates
+#'
+#' Occupancy covariate coefficients.
+#'
+#' @details
+#' Returns the occupancy covariates coefficients posterior sample
+#'
+#' @param fitmodel Output from the function runOccPlus
+#'
+#' @return A ggplot object
+#'
+#' @export
+#' @import dplyr
+#' @import ggplot2
+#'
+returnOccupancyCovariates <- function(fitmodel){
+
+  matrix_of_draws <- fitmodel$matrix_of_draws
+
+  S <- fitmodel$infos$S
+  ncov_psi <- fitmodel$infos$ncov_psi
+  speciesNames <- fitmodel$infos$speciesNames
+  occCovNames <- colnames(fitmodel$X_psi)
+  # idxcov <- which(occCovNames == covName)
+
+  # samples_subset <- matrix_of_draws[,grepl(param, colnames(matrix_of_draws))]
+  # samples_subset <- samples_subset[,idxcov + 0:(S - 1)*ncov_psi]
+
+  beta_psi_output0 <-
+    matrix_of_draws[,grepl("beta_psi\\[", colnames(matrix_of_draws))]
+
+  niter <- nrow(beta_psi_output0)
+
+  beta_psi_output <- array(NA, dim = c(niter, ncov_psi, S))
+  for(iter in 1:niter){
+    beta_psi_output[iter,,] <- matrix(beta_psi_output0[iter,], ncov_psi, S, byrow = F)
+  }
+
+  dimnames(beta_psi_output)[[2]] <- occCovNames
+  dimnames(beta_psi_output)[[3]] <- speciesNames
+
+  beta_psi_output
 
 }
-
-
 
 #' plotOccupancyCovariates
 #'
@@ -52,11 +73,13 @@ plotOccupancyCovariates <- function(fitmodel,
                                     idx_species = NULL
 ){
 
+  beta_psi_output <- returnOccupancyCovariates(fitmodel)
+
   if(is.null(covName)){
     stop("No name provided")
   }
 
-  matrix_of_draws <- fitmodel$matrix_of_draws
+  # matrix_of_draws <- fitmodel$matrix_of_draws
 
   S <- fitmodel$infos$S
   ncov_psi <- fitmodel$infos$ncov_psi
@@ -74,10 +97,18 @@ plotOccupancyCovariates <- function(fitmodel,
     idx_species <- 1:S
   }
 
-  param <- "beta_psi"
+  # samples_subset <- beta_psi_output[,,]
 
-  samples_subset <- matrix_of_draws[,grepl(param, colnames(matrix_of_draws))]
-  samples_subset <- samples_subset[,idxcov + 0:(S - 1)*ncov_psi]
+  samples_subset <- matrix(beta_psi_output[,idxcov, idx_species],
+                           dim(beta_psi_output)[1], length(idx_species))
+
+  # samples_subset <- beta_ord_output[,idxcov,]
+  # samples_subset <- samples_subset[,idx_species,drop=F]
+
+  # param <- "beta_psi"
+  #
+  # samples_subset <- matrix_of_draws[,grepl(param, colnames(matrix_of_draws))]
+  # samples_subset <- samples_subset[,idxcov + 0:(S - 1)*ncov_psi]
 
   data_plot <- apply(samples_subset, 2, function(x) {
     quantile(x, probs = c(0.025, 0.975))
@@ -110,12 +141,12 @@ plotOccupancyCovariates <- function(fitmodel,
 }
 
 
-#' plotDetectionCovariates
+#' returnOrdinationCovariates
 #'
-#' Detection covariate coefficients.
+#' Ordination covariate coefficients.
 #'
 #' @details
-#' Plots the 95% credible interval of the occupancy covariates coefficients
+#' Returns the 95% credible interval of the ordination covariates coefficients
 #'
 #' @param fitmodel Output from the function runOccPlus
 #' @param covName Name of the covariate to be plotted (same name as in data$info)
@@ -127,66 +158,109 @@ plotOccupancyCovariates <- function(fitmodel,
 #' @import dplyr
 #' @import ggplot2
 #'
-plotDetectionCovariates <- function(fitmodel,
-                                    covName = NULL,
-                                    idx_species = NULL
-){
+returnOrdinationCovariatesOutput <- function(fitmodel){
 
-  if(is.null(covName)){
-    stop("No name provided")
-  }
+  # if(is.null(covName)){
+  #   stop("No name provided")
+  # }
 
   matrix_of_draws <- fitmodel$matrix_of_draws
 
-  S <- fitmodel$infos$S
-  ncov_theta <- fitmodel$infos$ncov_theta
+  d <- fitmodel$infos$d
+  ncov_ord <- fitmodel$infos$ncov_ord
   speciesNames <- fitmodel$infos$speciesNames
-  occCovNames <- colnames(fitmodel$X_theta)
-  idxcov <- which(occCovNames == covName)
+  ordCovNames <- colnames(fitmodel$X_ord)
+  nsites <- length(fitmodel$infos$siteNames)
+  nspecies <- length(fitmodel$infos$speciesNames)
 
+  # if(length(idxcov) == 0){
+  #   stop("Covariate name not found. If you are using a categorical covariates,
+  #        the name might have changed to code the level. Use
+  #        colnames(fitmodel$X_ord) to find the new names")
+  # }
+  #
+  # if(is.null(idx_factors)){
+  #   idx_factors <- 1:d
+  # }
 
-  if(length(idxcov) == 0){
-    stop("Covariate name not found. If you are using a categorical covariates,
-         the name might have changed to code the level. Use
-         colnames(fitmodel$X_theta) to find the new names")
+  {
+    U_output0 <-
+      matrix_of_draws[,grepl("U\\[", colnames(matrix_of_draws))]
+    L_output0 <-
+      matrix_of_draws[,grepl("L\\[", colnames(matrix_of_draws))]
+    beta_ord_output0 <-
+      matrix_of_draws[,grepl("beta_ord\\[", colnames(matrix_of_draws))]
+
+    niter <- nrow(U_output0)
+
+    U_output <- array(NA, dim = c(niter, nsites, d))
+    for(iter in 1:niter){
+      U_output[iter,,] <- matrix(U_output0[iter,], nsites, d, byrow = F)
+    }
+
+    L_output <- array(NA, dim = c(niter, d, nspecies))
+    for(iter in 1:niter){
+      L_output[iter,,] <- matrix(L_output0[iter,], d, nspecies, byrow = F)
+    }
+
+    beta_ord_output <- array(NA, dim = c(niter, ncov_ord, d))
+    for(iter in 1:niter){
+      beta_ord_output[iter,,] <- matrix(beta_ord_output0[iter,], ncov_ord, d, byrow = F)
+    }
+
+    niter <- nrow(L_output)
+
+    L_output_reparam <- L_output
+    U_output_reparam <- U_output
+    # E_output_reparam <- E_output
+    beta_ord_output_reparam <- beta_ord_output
+
+    d <- dim(L_output)[2]
+
+    for (iter in 1:niter) {
+      # print(iter)
+
+      if(d == 1){
+
+        L1 <- L_output[iter,1,1]
+        L_output_reparam[iter,1,] <- L_output[iter,1,] / L1
+        U_output_reparam[iter,,1] <- U_output[iter,,1] * L1
+        beta_ord_output_reparam[iter,,1] <- beta_ord_output[iter,,1] * L1
+
+      } else {
+
+        L_current <- L_output[iter,,]
+        # E_current <- E_output[iter,,]
+        U_current <- U_output[iter,,]
+        beta_ord_current <- beta_ord_output[iter,,]
+
+        qr_decomp <- qr(L_current)
+        Q_current <- qr.Q(qr_decomp)
+        R_current <- qr.R(qr_decomp)
+
+        Q2 <- Q_current %*% diag(diag(R_current), nrow = d)
+        invQ2 <- diag(1 / diag(R_current), nrow = d) %*% t(Q_current)
+
+        betapsiord_new <- beta_ord_current %*% Q2
+        # E_new <- E_current %*% Q2
+        L_new <- invQ2 %*% L_current
+        U_new <- U_current %*% Q2
+
+        L_output_reparam[iter,,] <- L_new
+        # E_output_reparam[iter,] <- E_new
+        U_output_reparam[iter,,] <- U_new
+        beta_ord_output_reparam[iter,,] <- betapsiord_new
+      }
+
+    }
   }
 
-  if(is.null(idx_species)){
-    idx_species <- 1:S
-  }
+  beta_ord_output_reparam
 
-  param <- "beta_theta"
+  # samples_subset <- beta_ord_output_reparam
+  # samples_subset <- samples_subset[,idxcov + 0:(d - 1)*ncov_ord,drop=F]
 
-  samples_subset <- matrix_of_draws[,grepl(param, colnames(matrix_of_draws))]
-  samples_subset <- samples_subset[,idxcov + 0:(S - 1)*ncov_theta]
-
-  data_plot <- apply(samples_subset, 2, function(x) {
-    quantile(x, probs = c(0.025, 0.975))
-  }) %>%
-    t %>%
-    as.data.frame %>%
-    mutate(Species = speciesNames) %>%
-    mutate(speciesOrder = order(`2.5%`)) %>%
-    filter(Species %in% speciesNames[idx_species])
-
-  orderSpecies <- order(data_plot$`2.5%`)
-
-  plot_occcovs <- data_plot %>%
-    ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
-               ymin = `2.5%`,
-               ymax = `97.5%`)) + geom_errorbar() +
-    xlab("Species") +
-    # ylim(c(0,1)) +
-    ggtitle(covName) +
-    theme_bw() +
-    theme(
-      axis.text = element_text(angle = 90,
-                               size = 8),
-      plot.title = element_text(hjust = .5,
-                                size = 15)
-    ) + geom_hline(aes(yintercept = 0), color = "red")
-
-  plot_occcovs
+  # samples_subset
 
 }
 
@@ -208,19 +282,115 @@ plotDetectionCovariates <- function(fitmodel,
 #' @import ggplot2
 #'
 plotOrdinationCovariates <- function(fitmodel,
-                                    covName = NULL,
-                                    idx_factors = NULL
+                                     covName = NULL,
+                                     idx_factors = NULL
 ){
+
+  # if(is.null(covName)){
+  #   stop("No name provided")
+  # }
+  #
+  # matrix_of_draws <- fitmodel$matrix_of_draws
+  #
+  # d <- fitmodel$infos$d
+  # ncov_ord <- fitmodel$infos$ncov_ord
+  # speciesNames <- fitmodel$infos$speciesNames
+  # ordCovNames <- colnames(fitmodel$X_ord)
+  # idxcov <- which(ordCovNames == covName)
+  # nsites <- nrow(fitmodel$X_psi)
+  #
+  # if(length(idxcov) == 0){
+  #   stop("Covariate name not found. If you are using a categorical covariates,
+  #        the name might have changed to code the level. Use
+  #        colnames(fitmodel$X_ord) to find the new names")
+  # }
+  #
+  # if(is.null(idx_factors)){
+  #   idx_factors <- 1:d
+  # }
+  #
+  # param <- "beta_ord"
+  #
+  # {
+  #   U_output0 <-
+  #     matrix_of_draws[,grepl("U\\[", colnames(matrix_of_draws))]
+  #   L_output0 <-
+  #     matrix_of_draws[,grepl("L\\[", colnames(matrix_of_draws))]
+  #   beta_ord_output0 <-
+  #     matrix_of_draws[,grepl("beta_ord\\[", colnames(matrix_of_draws))]
+  #
+  #   niter <- nrow(U_output0)
+  #
+  #   U_output <- array(NA, dim = c(niter, nsites, d))
+  #   for(iter in 1:niter){
+  #     U_output[iter,,] <- matrix(U_output0[iter,], nsites, d, byrow = F)
+  #   }
+  #
+  #   L_output <- array(NA, dim = c(niter, d, nspecies))
+  #   for(iter in 1:niter){
+  #     L_output[iter,,] <- matrix(L_output0[iter,], d, nspecies, byrow = F)
+  #   }
+  #
+  #   beta_ord_output <- array(NA, dim = c(niter, ncov_ord, d))
+  #   for(iter in 1:niter){
+  #     beta_ord_output[iter,,] <- matrix(beta_ord_output0[iter,], ncov_ord, d, byrow = F)
+  #   }
+  #
+  #   L_output_reparam <- L_output
+  #   U_output_reparam <- U_output
+  #   # E_output_reparam <- E_output
+  #   beta_ord_output_reparam <- beta_ord_output
+  #
+  #   d <- dim(L_output)[2]
+  #
+  #   for (iter in 1:niter) {
+  #     print(iter)
+  #
+  #     if(d == 1){
+  #
+  #       L1 <- L_output[iter,1,1]
+  #       L_output_reparam[iter,1,] <- L_output[iter,1,] / L1
+  #       U_output_reparam[iter,,1] <- U_output[iter,,1] * L1
+  #       beta_ord_output_reparam[iter,,1] <- beta_ord_output[iter,,1] * L1
+  #
+  #     } else {
+  #
+  #       L_current <- L_output[iter,,]
+  #       # E_current <- E_output[iter,,]
+  #       U_current <- U_output[iter,,]
+  #       beta_ord_current <- beta_ord_output[iter,,]
+  #
+  #       qr_decomp <- qr(L_current)
+  #       Q_current <- qr.Q(qr_decomp)
+  #       R_current <- qr.R(qr_decomp)
+  #
+  #       Q2 <- Q_current %*% diag(diag(R_current), nrow = d)
+  #       invQ2 <- diag(1 / diag(R_current), nrow = d) %*% t(Q_current)
+  #
+  #       betapsiord_new <- beta_ord_current %*% Q2
+  #       # E_new <- E_current %*% Q2
+  #       L_new <- invQ2 %*% L_current
+  #       U_new <- U_current %*% Q2
+  #
+  #       L_output_reparam[iter,,] <- L_new
+  #       # E_output_reparam[iter,] <- E_new
+  #       U_output_reparam[iter,,] <- U_new
+  #       beta_ord_output_reparam[iter,,] <- betapsiord_new
+  #     }
+  #
+  #   }
+  # }
+  #
+  # samples_subset <- beta_ord_output_reparam
+  # # samples_subset <- matrix_of_draws[,grepl(param, colnames(matrix_of_draws))]
+  # samples_subset <- samples_subset[,idxcov + 0:(d - 1)*ncov_ord,drop=F]
+
+  beta_ord_output <- returnOrdinationCovariatesOutput(fitmodel)
 
   if(is.null(covName)){
     stop("No name provided")
   }
 
-  matrix_of_draws <- fitmodel$matrix_of_draws
-
-  d <- fitmodel$infos$d
-  ncov_ord <- fitmodel$infos$ncov_ord
-  speciesNames <- fitmodel$infos$speciesNames
   ordCovNames <- colnames(fitmodel$X_ord)
   idxcov <- which(ordCovNames == covName)
 
@@ -230,14 +400,17 @@ plotOrdinationCovariates <- function(fitmodel,
          colnames(fitmodel$X_ord) to find the new names")
   }
 
+  d <- fitmodel$infos$d
+
   if(is.null(idx_factors)){
     idx_factors <- 1:d
   }
 
-  param <- "beta_ord"
+  samples_subset <- matrix(beta_ord_output[,idxcov, idx_factors],
+                           dim(beta_ord_output)[1], length(idx_factors))
 
-  samples_subset <- matrix_of_draws[,grepl(param, colnames(matrix_of_draws))]
-  samples_subset <- samples_subset[,idxcov + 0:(d - 1)*ncov_ord]
+  # beta_ord_output[,idxcov,]
+  # samples_subset <- samples_subset[,idx_factors,drop=F]
 
   data_plot <- apply(samples_subset, 2, function(x) {
     quantile(x, probs = c(0.025, 0.975))
@@ -266,6 +439,249 @@ plotOrdinationCovariates <- function(fitmodel,
 
 }
 
+#' returnDetectionCovariates
+#'
+#' Detection covariate coefficients.
+#'
+#' @details
+#' Returns the detection covariates coefficients posterior sample
+#'
+#' @param fitmodel Output from the function runOccPlus
+#'
+#' @return A ggplot object
+#'
+#' @export
+#' @import dplyr
+#' @import ggplot2
+#'
+returnDetectionCovariates <- function(fitmodel){
+
+  matrix_of_draws <- fitmodel$matrix_of_draws
+
+  S <- fitmodel$infos$S
+  ncov_theta <- fitmodel$infos$ncov_theta
+  speciesNames <- fitmodel$infos$speciesNames
+  detCovNames <- colnames(fitmodel$X_theta)
+  # idxcov <- which(occCovNames == covName)
+
+  # samples_subset <- matrix_of_draws[,grepl(param, colnames(matrix_of_draws))]
+  # samples_subset <- samples_subset[,idxcov + 0:(S - 1)*ncov_psi]
+
+  beta_theta_output0 <-
+    matrix_of_draws[,grepl("beta_theta\\[", colnames(matrix_of_draws))]
+
+  niter <- nrow(beta_theta_output0)
+
+  beta_theta_output <- array(NA, dim = c(niter, ncov_theta, S))
+  for(iter in 1:niter){
+    beta_theta_output[iter,,] <- matrix(beta_theta_output0[iter,], ncov_theta, S, byrow = F)
+  }
+
+  dimnames(beta_theta_output)[[2]] <- detCovNames
+  dimnames(beta_theta_output)[[3]] <- speciesNames
+
+  beta_theta_output
+
+  # data_plot <- apply(samples_subset, 2, function(x) {
+  #   quantile(x, probs = c(0.025, 0.975))
+  # }) %>%
+  #   t %>%
+  #   as.data.frame %>%
+  #   mutate(Species = speciesNames) %>%
+  #   mutate(speciesOrder = order(`2.5%`)) %>%
+  #   filter(Species %in% speciesNames[idx_species])
+  #
+  # orderSpecies <- order(data_plot$`2.5%`)
+  #
+  # plot_occcovs <- data_plot %>%
+  #   ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
+  #              ymin = `2.5%`,
+  #              ymax = `97.5%`)) + geom_errorbar() +
+  #   xlab("Species") +
+  #   # ylim(c(0,1)) +
+  #   ggtitle(covName) +
+  #   theme_bw() +
+  #   theme(
+  #     axis.text = element_text(angle = 90,
+  #                              size = 8),
+  #     plot.title = element_text(hjust = .5,
+  #                               size = 15)
+  #   ) + geom_hline(aes(yintercept = 0), color = "red")
+  #
+  # plot_occcovs
+
+}
+
+#' plotDetectionCovariates
+#'
+#' Detection covariate coefficients.
+#'
+#' @details
+#' Plots the 95% credible interval of the detection covariates coefficients
+#'
+#' @param fitmodel Output from the function runOccPlus
+#' @param covName Name of the covariate to be plotted (same name as in data$info)
+#' @param idx_species Indexes of the species to be plotted (leave out to plot all the species).
+#'
+#' @return A ggplot object
+#'
+#' @export
+#' @import dplyr
+#' @import ggplot2
+#'
+plotDetectionCovariates <- function(fitmodel,
+                                    covName = NULL,
+                                    idx_species = NULL
+){
+
+  beta_theta_output <- returnDetectionCovariates(fitmodel)
+
+  if(is.null(covName)){
+    stop("No name provided")
+  }
+
+  # matrix_of_draws <- fitmodel$matrix_of_draws
+
+  S <- fitmodel$infos$S
+  ncov_theta <- fitmodel$infos$ncov_theta
+  speciesNames <- fitmodel$infos$speciesNames
+  detCovNames <- colnames(fitmodel$X_theta)
+  idxcov <- which(detCovNames == covName)
+
+  if(length(idxcov) == 0){
+    stop("Covariate name not found. If you are using a categorical covariates,
+         the name might have changed to code the level. Use
+         colnames(fitmodel$X_det) to find the new names")
+  }
+
+  if(is.null(idx_species)){
+    idx_species <- 1:S
+  }
+
+  samples_subset <- matrix(beta_theta_output[,idxcov, idx_species],
+                           dim(beta_theta_output)[1], length(idx_species))
+
+  data_plot <- apply(samples_subset, 2, function(x) {
+    quantile(x, probs = c(0.025, 0.975))
+  }) %>%
+    t %>%
+    as.data.frame %>%
+    mutate(Species = speciesNames) %>%
+    mutate(speciesOrder = order(`2.5%`)) %>%
+    filter(Species %in% speciesNames[idx_species])
+
+  orderSpecies <- order(data_plot$`2.5%`)
+
+  plot_occcovs <- data_plot %>%
+    ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
+               ymin = `2.5%`,
+               ymax = `97.5%`)) + geom_errorbar() +
+    xlab("Species") +
+    # ylim(c(0,1)) +
+    ggtitle(covName) +
+    theme_bw() +
+    theme(
+      axis.text = element_text(angle = 90,
+                               size = 8),
+      plot.title = element_text(hjust = .5,
+                                size = 15)
+    ) + geom_hline(aes(yintercept = 0), color = "red")
+
+  plot_occcovs
+
+}
+
+
+plotSpeciesRates <- function(data_plot,
+                             orderSpecies,
+                             subset){
+
+  data_plot %>%
+    filter(Species %in% speciesNames[orderSpecies[subset]]) %>%
+    ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
+               ymin = `2.5%`,
+               ymax = `97.5%`)) + geom_errorbar() +
+    xlab("Species") +
+    # ylim(c(0,1)) +
+    ggtitle("Collection rates") +
+    theme_bw() +
+    ylim(c(0,1)) +
+    theme(
+      axis.text = element_text(angle = 90,
+                               size = 8),
+      plot.title = element_text(hjust = .5,
+                                size = 15)
+    )
+
+}
+
+
+
+
+
+
+#' returnOccupancyProbs
+#'
+#' Baseline occupancy rate for each species.
+#'
+#' @details
+#' Returns the 95% credible interval of the baseline occupancy rates
+#'
+#' @param fitmodel Output from the function runOccPlus
+#' @param idx_species Indexes of the species to be plotted (leave out to plot all the species).
+#'
+#' @return The credible interval plot
+#'
+#' @examples
+#' \dontrun{
+#' returnOccupancyRates(fitmodel, idx_species = 1:5)
+#' }
+#'
+#' @export
+#' @import dplyr
+#' @import ggplot2
+#'
+returnOccupancyRates <- function(fitmodel,
+                                 idx_species = NULL){
+
+  matrix_of_draws <- fitmodel$matrix_of_draws
+
+  X_psi <- fitmodel$X_psi
+  ncov_psi <- ncol(X_psi)
+
+  beta0_psi_output <-
+    matrix_of_draws[,grepl("beta0_psi\\[", colnames(matrix_of_draws))]
+  beta_psi_output <-
+    matrix_of_draws[,grepl("beta_psi\\[", colnames(matrix_of_draws))]
+  U_output <-
+    matrix_of_draws[,grepl("U\\[", colnames(matrix_of_draws))]
+  L_output <-
+    matrix_of_draws[,grepl("LL\\[", colnames(matrix_of_draws))]
+
+  niter <- nrow(beta0_psi_output)
+  S <- fitmodel$infos$S
+  d <- fitmodel$infos$d
+  n <- length(fitmodel$infos$siteNames)
+  speciesNames <- fitmodel$infos$speciesNames
+
+  psi_output <- array(NA, dim = c(niter, n, S))
+
+  dimnames(psi_output)[[2]] <- fitmodel$infos$siteNames
+  dimnames(psi_output)[[3]] <- speciesNames
+
+  for (iter in 1:niter) {
+    psi_output[iter,,] <-
+      logistic(
+        matrix(beta0_psi_output[iter,], n, S, byrow = T) +
+          X_psi %*% matrix(beta_psi_output[iter,], ncov_psi, S) +
+          matrix(U_output[iter,], n, d, byrow = F) %*% matrix(L_output[iter,], d, S)
+      )
+  }
+
+  psi_output
+
+}
+
 #' plotOccupancyRates
 #'
 #' Baseline occupancy rate for each species.
@@ -290,28 +706,33 @@ plotOrdinationCovariates <- function(fitmodel,
 plotOccupancyRates <- function(fitmodel,
                                idx_species = NULL){
 
-  matrix_of_draws <- fitmodel$matrix_of_draws
+  psi_output <- computeOccupancyProbs(fitmodel)
+  # matrix_of_draws <- fitmodel$matrix_of_draws
+  #
+  # beta0_psi_output <-
+  #   matrix_of_draws[,grepl("beta0_psi\\[", colnames(matrix_of_draws))]
+  # U_output <-
+  #   matrix_of_draws[,grepl("U\\[", colnames(matrix_of_draws))]
+  # L_output <-
+  #   matrix_of_draws[,grepl("LL\\[", colnames(matrix_of_draws))]
+  #
+  X_psi <- fitmodel$X_psi
+  ncov_psi <- ncol(X_psi)
 
-  beta0_psi_output <-
-    matrix_of_draws[,grepl("beta0_psi\\[", colnames(matrix_of_draws))]
-  U_output <-
-    matrix_of_draws[,grepl("U\\[", colnames(matrix_of_draws))]
-  L_output <-
-    matrix_of_draws[,grepl("LL\\[", colnames(matrix_of_draws))]
-
-  niter <- nrow(beta0_psi_output)
+  niter <- dim(psi_output)[1]
   S <- fitmodel$infos$S
   d <- fitmodel$infos$d
   n <- length(fitmodel$infos$siteNames)
   speciesNames <- fitmodel$infos$speciesNames
-
-  beta0psiUL_output <- array(NA, dim = c(niter, n, S))
-
-  for (iter in 1:niter) {
-    beta0psiUL_output[iter,,] <-
-      matrix(beta0_psi_output[iter,], n, S, byrow = T)# +
-      # matrix(U_output[iter,], n, d, byrow = F) %*% matrix(L_output[iter,], d, S)
-  }
+  #
+  # beta0psiUL_output <- array(NA, dim = c(niter, n, S))
+  #
+  # for (iter in 1:niter) {
+  #   beta0psiUL_output[iter,,] <-
+  #     matrix(beta0_psi_output[iter,], n, S, byrow = T) +
+  #     X_psi %*% matrix(beta_psi_output[iter,], ncov_psi, S) +
+  #     matrix(U_output[iter,], n, d, byrow = F) %*% matrix(L_output[iter,], d, S)
+  # }
 
 
   if(is.null(idx_species)){
@@ -320,11 +741,12 @@ plotOccupancyRates <- function(fitmodel,
 
   # UL_mean <- apply(beta0psiUL_output, 3, mean)
 
-  beta0psibar_output <- apply(beta0psiUL_output, c(1,3), function(x){
-    mean(logistic(x))
+
+  psi_mean_output <- apply(psi_output, c(1,3), function(x){
+    mean(x)
   })
 
-  data_plot <- apply(beta0psibar_output, 2, function(x) {
+  data_plot <- apply(psi_mean_output, 2, function(x) {
     # quantile(logistic(x), probs = c(0.025, 0.975))
     quantile(x, probs = c(0.025, 0.975))
   }) %>%
@@ -536,7 +958,7 @@ plotDetectionRates <- function(fitmodel,
 #' @import ggplot2
 #'
 plotStage1FPRates <- function(fitmodel,
-                                 idx_species = NULL){
+                              idx_species = NULL){
 
   matrix_of_draws <- fitmodel$matrix_of_draws
 
@@ -611,7 +1033,7 @@ plotStage1FPRates <- function(fitmodel,
 #' @import ggplot2
 #'
 plotStage2FPRates <- function(fitmodel,
-                                 idx_species = NULL){
+                              idx_species = NULL){
 
   matrix_of_draws <- fitmodel$matrix_of_draws
 
@@ -764,7 +1186,7 @@ plotReadIntensity <- function(fitmodel){
   #   mutate(iter = as.numeric(gsub("V", "", iter)))  # Clean iteration labels
 
   x_grid_breaks <- round( c(0, 10, 20,
-                     x_grid[seq(1, length(x_grid), by = 10)] - 1))
+                            x_grid[seq(1, length(x_grid), by = 10)] - 1))
 
   # ggplot(df_combined, aes(x = x, y = density, group = interaction(iter, Type), color = Type)) +
   #   geom_line(alpha = 0.1, aes(color = Type)) +
@@ -812,7 +1234,7 @@ plotReadIntensity <- function(fitmodel){
 }
 
 generateCorrelationMatrixOutput <- function(fitmodel,
-                                   idx_species = NULL){
+                                            idx_species = NULL){
 
   matrix_of_draws <- fitmodel$matrix_of_draws
 
@@ -867,7 +1289,7 @@ generateCorrelationMatrixOutput <- function(fitmodel,
 #' @importFrom ggcorrplot ggcorrplot
 #'
 plotCorrelationMatrix <- function(fitmodel,
-                                 idx_species = NULL){
+                                  idx_species = NULL){
 
   Lambda_output <- generateCorrelationMatrixOutput(fitmodel, idx_species)
 
@@ -875,9 +1297,9 @@ plotCorrelationMatrix <- function(fitmodel,
                             function(x){quantile(x, probs = c(0.025, 0.5, 0.975))})
 
   ggcorrplot::ggcorrplot(Lambda_quantiles[2,,], method = "square", type = "lower",
-             lab = F, lab_size = 3,
-             colors = c("blue", "white", "red"),
-             title = "Covariance Matrix (as Correlation)") +
+                         lab = F, lab_size = 3,
+                         colors = c("blue", "white", "red"),
+                         title = "Covariance Matrix (as Correlation)") +
     theme(plot.title = element_text(hjust = 0.5,
                                     size = 16,
                                     face = "bold"))
@@ -931,30 +1353,30 @@ plotSigElementsCorMatrix <- function(fitmodel,
   colnames(Lambda_sign) <- rownames(Lambda_sign)
 
 
-#
-#   ggcorrplot2(Lambda_sign, method = "square", type = "lower",
-#              lab = F, lab_size = 3,
-#              colors = c("blue", "white", "red"),
-#              title = "Significant correlations") +
-#     theme(plot.title = element_text(hjust = 0.5,
-#                                     size = 16,
-#                                     face = "bold"))
+  #
+  #   ggcorrplot2(Lambda_sign, method = "square", type = "lower",
+  #              lab = F, lab_size = 3,
+  #              colors = c("blue", "white", "red"),
+  #              title = "Significant correlations") +
+  #     theme(plot.title = element_text(hjust = 0.5,
+  #                                     size = 16,
+  #                                     face = "bold"))
 
 
   ggcorrplot(
     # Lambda_quantiles[2,,],
     Lambda_sign,
     method = "square", type = "lower",
-             lab = F, lab_size = 3, insig = "blank",
-             colors = c("blue", "white", "red"),
-             title = "Significant correlations") +
+    lab = F, lab_size = 3, insig = "blank",
+    colors = c("blue", "white", "red"),
+    title = "Significant correlations") +
     theme(plot.title = element_text(hjust = 0.5,
                                     size = 16,
                                     face = "bold")) +
     theme(legend.position = "none") #+ theme(
-      # axis.text.x = element_blank(),
-      # axis.text.y = element_blank()
-    # )
+  # axis.text.x = element_blank(),
+  # axis.text.y = element_blank()
+  # )
 
 
 }
@@ -979,12 +1401,13 @@ plotSigElementsCorMatrix <- function(fitmodel,
 #' @import dplyr
 #' @import ggplot2
 #'
-computeOccupancyProbs <- function(fitmodel,
-                                  confidence = .95){
+computeOccupancyProbs <- function(fitmodel#,
+                                  # confidence = .95
+                                  ){
 
   matrix_of_draws <- fitmodel$matrix_of_draws
 
-  conflevels <- c((1 - confidence)/2, .5, (1 + confidence)/2)
+  # conflevels <- c((1 - confidence)/2, .5, (1 + confidence)/2)
 
   S <- fitmodel$infos$S
   speciesNames <- fitmodel$infos$speciesNames
@@ -994,16 +1417,18 @@ computeOccupancyProbs <- function(fitmodel,
 
   niter <- nrow(logit_psi_samples)
 
-  logit_psi_samples_array <- array(logit_psi_samples, dim = c(niter, n, S))
+  logit_psi_samples_array <- array(logistic(logit_psi_samples), dim = c(niter, n, S))
 
-  psi_quantiles <- apply(logit_psi_samples_array, c(2,3), function(x){
-    quantile(logistic(x), probs = conflevels)
-  })
+  # psi_quantiles <- apply(logit_psi_samples_array, c(2,3), function(x){
+  #   quantile(logistic(x), probs = conflevels)
+  # })
 
-  dimnames(psi_quantiles)[[2]] <- fitmodel$infos$siteNames
-  dimnames(psi_quantiles)[[3]] <- fitmodel$infos$speciesNames
+  # dimnames(psi_quantiles)[[2]] <- fitmodel$infos$siteNames
+  # dimnames(psi_quantiles)[[3]] <- fitmodel$infos$speciesNames
 
-  psi_quantiles
+  logit_psi_samples_array
+
+  # psi_quantiles
 
 }
 

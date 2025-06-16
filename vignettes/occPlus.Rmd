@@ -110,7 +110,26 @@ There are several outputs we can obtain:
 
 ### Covariates coefficients
 
-We provide three functions for plotting occupancy, ordination and detection
+First, we provide three functions for returning occupancy, ordination and detection
+covariate coefficients. The output is returned in the form (*niter* x *numberOfCovariates* x *numberOfSpecies*)
+
+```{r}
+detCovariatesOutput <- returnDetectionCovariates(fitmodel)
+str(detCovariatesOutput)
+```
+
+```{r}
+ordCovariatesOutput <- returnOrdinationCovariatesOutput(fitmodel)
+str(ordCovariatesOutput)
+```
+
+```{r}
+occCovariatesOutput <- returnOccupancyCovariates(fitmodel)
+str(occCovariatesOutput)
+```
+
+
+Next, we provide three functions for plotting occupancy, ordination and detection
 covariate coefficients:
 
 ```{r}
@@ -127,7 +146,7 @@ plotDetectionCovariates(fitmodel, idx_species = 1:10, covName = "X_theta")
 
 ### Baseline rates
 
-We can plot baseline occupancy rates via
+We can return baseline occupancy rates via
 
 ```{r}
 plotOccupancyRates(fitmodel, idx_species = 1:20)
@@ -156,11 +175,19 @@ plotStage2FPRates(fitmodel, idx_species = 1:20)
 
 ### Occupancy rates
 
-To compute occupancy probabilities at each site and for each species, we type
+To compute occupancy probabilities at each site and for each species, we use
+the following function. 
 
-```{r, eval = F}
-computeOccupancyProbs(fitmodel)
+```{r, eval = T}
+occProbs <- computeOccupancyProbs(fitmodel)
+str(occProbs)
 ```
+
+
+The output is stored in the form (*iterations* x *sites* x *species*).
+
+
+
 
 ### Read intensity
 
