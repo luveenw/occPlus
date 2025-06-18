@@ -168,13 +168,11 @@ model {
 
                log_p_ydelta1 +=
                   binomial_lpmf(
-                y[sumK[sumM[i] + m]+k,s] |
-                  1, p[l,s]);
+                y[sumK[sumL[sumM[i] + m] + l] + k,s] | 1, p[l,s]);
 
                   log_p_ydelta1 +=
                   binomial_lpmf(
-                y[sumK[sumM[i] + m]+k,s] |
-                  1, q[l,s]);
+                y[sumK[sumL[sumM[i] + m] + l] + k,s] | 1, q[l,s]);
 
 
               }
