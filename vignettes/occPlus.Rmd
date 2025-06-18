@@ -79,6 +79,10 @@ fitmodel  <- runOccPlus(data,
 The names of the covariates in `occCovariates`, `ordCovariates` and `detCovariates`
 should match the column name in data$info.
 
+occPlus does not require a threshold for truncation to fit occupancy models, as
+described in the paper. If the user still wants to set a threshold, they can use
+the argument *threshold*.
+
 ## Model selection
 
 Model selection for the different factors $d$ can be done using the `loo` package.

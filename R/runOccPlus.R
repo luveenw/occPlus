@@ -13,6 +13,10 @@
 #'   with the number of reads of each species in each sample.}
 #' }
 #' @param d Number of factors.
+#' @param threshold (Optional) threshold used to truncated the reads to binary data.
+#' Data greater than or equal to the threshold will be considered as detection.
+#' If this is set to F (which is the default), occPlus estimates two modes as described
+#' in the paper.
 #' @param occCovariates vector of the name of the covariates for the occupancy probabilities.
 #' Names should match the column name in data$info.
 #' @param ordCovariates vector of the name of the covariates for the occupancy probabilities.
