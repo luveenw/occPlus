@@ -37,10 +37,11 @@
 #' @import rstan
 #'
 runOccPlus <- function(data,
-                          d,
-                          occCovariates = c(),
-                          ordCovariates = c(),
-                          detCovariates = c(),
+                       d,
+                       threshold = F,
+                       occCovariates = c(),
+                       ordCovariates = c(),
+                       detCovariates = c(),
                        numSamples = 1000){
 
   data_info <- as.data.frame(data$info)
@@ -158,24 +159,24 @@ runOccPlus <- function(data,
 
     }
 
-    delta <- matrix(NA, N, S)
-
-    for (s in 1:S) {
-
-      for (i in 1:n) {
-
-        for (m in 1:M[i]) {
-
-          delta[sumM[i] + m,s] <-
-            as.numeric(all(OTU[sumM_marker[sumM[i] + m] + 1:M_marker[sumM[i] + m], s] == 0))
-
-        }
-
-      }
-
-    }
-
-    delta[is.na(delta)] <- 0
+    # delta <- matrix(NA, N, S)
+    #
+    # for (s in 1:S) {
+    #
+    #   for (i in 1:n) {
+    #
+    #     for (m in 1:M[i]) {
+    #
+    #       delta[sumM[i] + m,s] <-
+    #         as.numeric(all(OTU[sumM_marker[sumM[i] + m] + 1:M_marker[sumM[i] + m], s] == 0))
+    #
+    #     }
+    #
+    #   }
+    #
+    # }
+#
+    # delta[is.na(delta)] <- 0
 
   }
 
@@ -280,6 +281,15 @@ runOccPlus <- function(data,
     b_sigma1 <- 1
   }
 
+  y <- OTU
+
+  if(threshold != F){
+
+    y[y >= threshold] <- 1
+    y[y < threshold] <- 0
+
+  }
+
   edna_dat <- list(n = n,
                    N = N,
                    N2 = N2,
@@ -301,7 +311,8 @@ runOccPlus <- function(data,
                    K = K,
                    logy1 = logy1,
                    logy_na = logy_na,
-                   delta = delta,
+                   y=y,
+                   # delta = delta,
                    prior_beta_psi = prior_beta_psi,
                    prior_beta_psi_sd = prior_beta_psi_sd,
                    prior_beta_theta = prior_beta_theta,
@@ -329,22 +340,36 @@ runOccPlus <- function(data,
 
   print("Loading STAN")
 
-  model0 <- rstan::stan_model(file = system.file("stan/code.stan",
-                                                package = "occPlus"))
+  if(!threshold){
+    fileCode <- system.file("stan/code.stan",
+                            package = "occPlus")
+  } else {
+    fileCode <- system.file("stan/code_binary.stan",
+                            package = "occPlus")
+  }
+
+
+  model0 <- rstan::stan_model(file = fileCode)
   # model0 <- rstan::stan_model(file = "code.stan")
 
   # model <- rstan::stan_model(file = system.file("stan/code_optimised.stan",
                                                 # package = "occPlus"))
 
+  params <- c("beta_psi","beta_ord","beta_theta",
+              "beta0_psi","U", "LL","E","p","q","theta0",
+              "logit_psi", "log_lik"
+  )
+
+  if(!threshold){
+    params <- c(params,"mu1","sigma0", "sigma1","pi0")
+  }
+
+
   vb_fit <-
     rstan::vb(model0, data = edna_dat,
     # rstan::vb(model, data = edna_dat,
                algorithm = "meanfield",
-               pars = c("beta_psi","beta_ord","beta_theta",
-                        "mu1","sigma0", "sigma1","beta0_psi",
-                        "U", "LL","E","p", "pi0","q","theta0",
-                        "logit_psi", "log_lik"
-               ),
+               pars = params,
                init = init_fun,
                elbo_samples = 500,
                tol_rel_obj = 0.0005,

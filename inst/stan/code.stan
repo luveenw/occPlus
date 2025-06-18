@@ -40,8 +40,9 @@ data {
   // survey level information
   real logy1[N3, S];
   int logy_na[N3, S];
+  int y[N3, S];
 
-  int delta[N, S];
+  // int delta[N, S];
 
   // priors
   real prior_beta_psi;
