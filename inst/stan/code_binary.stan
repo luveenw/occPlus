@@ -233,7 +233,7 @@ generated quantities{
                 y[sumK[sumM[i] + m]+k,s] |
                   1, p[l,s]);
 
-                  log_p_ydelta1 +=
+                  log_p_ydelta0 +=
                   binomial_lpmf(
                 y[sumK[sumM[i] + m]+k,s] |
                   1, q[l,s]);
