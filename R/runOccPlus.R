@@ -289,8 +289,8 @@ runOccPlus <- function(data,
 
   if(threshold != F){
 
-    y[y >= threshold] <- 1
-    y[y < threshold] <- 0
+    y[OTU >= threshold] <- 1
+    y[OTU < threshold] <- 0
 
   }
 
@@ -375,8 +375,8 @@ runOccPlus <- function(data,
                algorithm = "meanfield",
                pars = params,
                init = init_fun,
-               elbo_samples = 500,
-               tol_rel_obj = 0.0005,
+               # elbo_samples = 500,
+               # tol_rel_obj = 0.0005,
                output_samples = numSamples)
 
   matrix_of_draws <- as.matrix(vb_fit)

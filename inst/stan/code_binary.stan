@@ -170,7 +170,7 @@ model {
                   binomial_lpmf(
                 y[sumK[sumL[sumM[i] + m] + l] + k,s] | 1, p[l,s]);
 
-                  log_p_ydelta1 +=
+                  log_p_ydelta0 +=
                   binomial_lpmf(
                 y[sumK[sumL[sumM[i] + m] + l] + k,s] | 1, q[l,s]);
 
