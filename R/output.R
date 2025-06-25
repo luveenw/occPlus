@@ -115,9 +115,9 @@ plotOccupancyCovariates <- function(fitmodel,
   }) %>%
     t %>%
     as.data.frame %>%
-    mutate(Species = speciesNames) %>%
-    mutate(speciesOrder = order(`2.5%`)) %>%
-    filter(Species %in% speciesNames[idx_species])
+    mutate(Species = speciesNames[idx_species]) %>%
+    mutate(speciesOrder = order(`2.5%`)) #%>%
+    # filter(Species %in% speciesNames[idx_species])
 
   orderSpecies <- order(data_plot$`2.5%`)
 
@@ -566,7 +566,7 @@ plotDetectionCovariates <- function(fitmodel,
   }) %>%
     t %>%
     as.data.frame %>%
-    mutate(Species = speciesNames) %>%
+    mutate(Species = speciesNames[idx_species]) %>%
     mutate(speciesOrder = order(`2.5%`)) %>%
     filter(Species %in% speciesNames[idx_species])
 
@@ -641,44 +641,33 @@ plotSpeciesRates <- function(data_plot,
 #' @import dplyr
 #' @import ggplot2
 #'
-returnOccupancyRates <- function(fitmodel,
-                                 idx_species = NULL){
+returnOccupancyRates <- function(fitmodel){
+
 
   matrix_of_draws <- fitmodel$matrix_of_draws
 
-  X_psi <- fitmodel$X_psi
-  ncov_psi <- ncol(X_psi)
+  # conflevels <- c((1 - confidence)/2, .5, (1 + confidence)/2)
 
-  beta0_psi_output <-
-    matrix_of_draws[,grepl("beta0_psi\\[", colnames(matrix_of_draws))]
-  beta_psi_output <-
-    matrix_of_draws[,grepl("beta_psi\\[", colnames(matrix_of_draws))]
-  U_output <-
-    matrix_of_draws[,grepl("U\\[", colnames(matrix_of_draws))]
-  L_output <-
-    matrix_of_draws[,grepl("LL\\[", colnames(matrix_of_draws))]
-
-  niter <- nrow(beta0_psi_output)
   S <- fitmodel$infos$S
-  d <- fitmodel$infos$d
-  n <- length(fitmodel$infos$siteNames)
   speciesNames <- fitmodel$infos$speciesNames
+  n <- length(fitmodel$infos$siteNames)
 
-  psi_output <- array(NA, dim = c(niter, n, S))
+  logit_psi_samples <- matrix_of_draws[,grepl("logit_psi\\[", colnames(matrix_of_draws))]
 
-  dimnames(psi_output)[[2]] <- fitmodel$infos$siteNames
-  dimnames(psi_output)[[3]] <- speciesNames
+  niter <- nrow(logit_psi_samples)
 
-  for (iter in 1:niter) {
-    psi_output[iter,,] <-
-      logistic(
-        matrix(beta0_psi_output[iter,], n, S, byrow = T) +
-          X_psi %*% matrix(beta_psi_output[iter,], ncov_psi, S) +
-          matrix(U_output[iter,], n, d, byrow = F) %*% matrix(L_output[iter,], d, S)
-      )
-  }
+  logit_psi_samples_array <- array(logistic(logit_psi_samples), dim = c(niter, n, S))
 
-  psi_output
+  # psi_quantiles <- apply(logit_psi_samples_array, c(2,3), function(x){
+  #   quantile(logistic(x), probs = conflevels)
+  # })
+
+  # dimnames(psi_quantiles)[[2]] <- fitmodel$infos$siteNames
+  # dimnames(psi_quantiles)[[3]] <- fitmodel$infos$speciesNames
+
+  logit_psi_samples_array
+
+  # psi_quantiles
 
 }
 
@@ -911,13 +900,18 @@ plotDetectionRates <- function(fitmodel,
     mutate(speciesOrder = order(`2.5%`)) %>%
     filter(Species %in% speciesNames[idx_species])
 
-  orderSpecies <- order(data_plot$`2.5%`[data_plot$Primer == data_plot$Primer[1]])
+  # orderSpecies <- order(data_plot$`2.5%`[data_plot$Primer == data_plot$Primer[1]])
 
   detectionRates <- data_plot %>%
-    ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
+    ggplot(aes(x =
+                 factor(Species, level = speciesNames),
+                 # factor(Species, level = speciesNames[orderSpecies]),
                ymin = `2.5%`,
                ymax = `97.5%`,
-               color = factor(Primer))) + geom_errorbar() +
+               color = factor(Primer),
+               group = factor(Primer))) +
+    geom_errorbar(position = position_dodge(width = .15), # Use the SAME width as geom_col
+                  width = .5) +
     xlab("Species") +
     # ylim(c(0,1)) +
     ggtitle("Detection rates") +
@@ -991,7 +985,8 @@ plotStage1FPRates <- function(fitmodel,
   detectionRates <- data_plot %>%
     ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
                ymin = `2.5%`,
-               ymax = `97.5%`)) + geom_errorbar() +
+               ymax = `97.5%`)) +
+    geom_errorbar() +
     xlab("Species") +
     # ylim(c(0,1)) +
     ggtitle("Stage 1 FP rates") +
@@ -1070,10 +1065,14 @@ plotStage2FPRates <- function(fitmodel,
   orderSpecies <- order(data_plot$`2.5%`[data_plot$Primer == data_plot$Primer[1]])
 
   detectionRates <- data_plot %>%
-    ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
+    ggplot(aes(x =
+                 # factor(Species, level = speciesNames[orderSpecies]),
+                 factor(Species, level = speciesNames),
                ymin = `2.5%`,
                ymax = `97.5%`,
-               color = factor(Primer))) + geom_errorbar() +
+               color = factor(Primer))) +
+    geom_errorbar(position = position_dodge(width = .15), # Use the SAME width as geom_col
+                  width = .5) +
     xlab("Species") +
     # ylim(c(0,1)) +
     ggtitle("Stage 2 FP rates") +
@@ -1226,7 +1225,10 @@ plotReadIntensity <- function(fitmodel){
       # labels = function(x) sprintf("%.2f", exp(x) - 1)  # Format labels
       trans = "log"
     ) +
-    theme(axis.text.x = element_text(angle = 90),
+    theme(axis.text.x = element_text(angle = 90,
+                                     size = 12),
+          axis.text.y = element_text(angle = 90,
+                                     size = 12),
           plot.title = element_text(hjust = 0.5,
                                     size = 16,
                                     face = "bold"))
@@ -1405,30 +1407,43 @@ computeOccupancyProbs <- function(fitmodel#,
                                   # confidence = .95
                                   ){
 
+
   matrix_of_draws <- fitmodel$matrix_of_draws
 
-  # conflevels <- c((1 - confidence)/2, .5, (1 + confidence)/2)
+  X_psi <- fitmodel$X_psi
+  ncov_psi <- ncol(X_psi)
 
+  beta0_psi_output <-
+    matrix_of_draws[,grepl("beta0_psi\\[", colnames(matrix_of_draws))]
+  beta_psi_output <-
+    matrix_of_draws[,grepl("beta_psi\\[", colnames(matrix_of_draws))]
+  U_output <-
+    matrix_of_draws[,grepl("U\\[", colnames(matrix_of_draws))]
+  L_output <-
+    matrix_of_draws[,grepl("LL\\[", colnames(matrix_of_draws))]
+
+  niter <- nrow(beta0_psi_output)
   S <- fitmodel$infos$S
-  speciesNames <- fitmodel$infos$speciesNames
+  d <- fitmodel$infos$d
   n <- length(fitmodel$infos$siteNames)
+  speciesNames <- fitmodel$infos$speciesNames
 
-  logit_psi_samples <- matrix_of_draws[,grepl("logit_psi\\[", colnames(matrix_of_draws))]
+  psi_output <- array(NA, dim = c(niter, n, S))
 
-  niter <- nrow(logit_psi_samples)
+  dimnames(psi_output)[[2]] <- fitmodel$infos$siteNames
+  dimnames(psi_output)[[3]] <- speciesNames
 
-  logit_psi_samples_array <- array(logistic(logit_psi_samples), dim = c(niter, n, S))
+  for (iter in 1:niter) {
+    psi_output[iter,,] <-
+      logistic(
+        matrix(beta0_psi_output[iter,], n, S, byrow = T) +
+          X_psi %*% matrix(beta_psi_output[iter,], ncov_psi, S) +
+          matrix(U_output[iter,], n, d, byrow = F) %*% matrix(L_output[iter,], d, S)
+      )
+  }
 
-  # psi_quantiles <- apply(logit_psi_samples_array, c(2,3), function(x){
-  #   quantile(logistic(x), probs = conflevels)
-  # })
+  psi_output
 
-  # dimnames(psi_quantiles)[[2]] <- fitmodel$infos$siteNames
-  # dimnames(psi_quantiles)[[3]] <- fitmodel$infos$speciesNames
-
-  logit_psi_samples_array
-
-  # psi_quantiles
 
 }
 

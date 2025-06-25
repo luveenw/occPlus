@@ -46,7 +46,7 @@ runOccPlus <- function(data,
                        occCovariates = c(),
                        ordCovariates = c(),
                        detCovariates = c(),
-                       numSamples = 1000){
+                       numSamples = 350){
 
   data_info <- as.data.frame(data$info)
   OTU <- data$OTU
@@ -55,6 +55,10 @@ runOccPlus <- function(data,
   {
     if(!all(c(occCovariates, ordCovariates, detCovariates) %in% colnames(data$info))){
         stop("Covariate names provided not in data$info")
+    }
+
+    if(any(is.na(data_info$Site)) | any(is.na(data_info$Sample)) | any(is.na(data_info$Primer))){
+      stop("NA in Site, Sample or Primer columns")
     }
   }
 
@@ -361,13 +365,13 @@ runOccPlus <- function(data,
 
   params <- c("beta_psi","beta_ord","beta_theta",
               "beta0_psi","U", "LL","E","p","q","theta0",
-              "logit_psi", "log_lik"
+              "logit_psi",
+              "log_lik"
   )
 
   if(!threshold){
     params <- c(params,"mu1","sigma0", "sigma1","pi0")
   }
-
 
   vb_fit <-
     rstan::vb(model0, data = edna_dat,
@@ -376,7 +380,7 @@ runOccPlus <- function(data,
                pars = params,
                init = init_fun,
                # elbo_samples = 500,
-               # tol_rel_obj = 0.0005,
+               tol_rel_obj = 0.0001,
                output_samples = numSamples)
 
   matrix_of_draws <- as.matrix(vb_fit)

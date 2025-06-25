@@ -405,7 +405,7 @@ model {
 
 generated quantities{
 
-  matrix[n,S] log_lik;
+  vector[n] log_lik;
 
   matrix[N3, S] f0y; // likelihood of a given PCR
   matrix[N3, S] f1y;
@@ -495,9 +495,11 @@ generated quantities{
 
   // compute of loglikelihood
 
-  for(s in 1:S){
+  for (i in 1:n) {
 
-    for (i in 1:n) {
+      log_lik[i] = 0;
+
+      for(s in 1:S){
 
       // log probability of y given z = 1
       log_p_yz1 = 0;
@@ -636,7 +638,7 @@ generated quantities{
 
       }
 
-      log_lik[i,s] = log_sum_exp(
+      log_lik[i] += log_sum_exp(
         log_psi[i, s] + log_p_yz1,
         log1m_psi[i, s] + log_p_yz0
         );

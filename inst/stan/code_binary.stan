@@ -202,7 +202,7 @@ model {
 
 generated quantities{
 
-  matrix[n,S] log_lik;
+  vector[n] log_lik;
 
   real log_p_yz1;
   real log_p_yz0;
@@ -211,9 +211,11 @@ generated quantities{
 
   // compute of loglikelihood
 
-  for(s in 1:S){
+  for (i in 1:n) {
 
-    for (i in 1:n) {
+    log_lik[i] = 0;
+
+    for(s in 1:S){
 
       log_p_yz1 = 0;
       log_p_yz0 = 0;
@@ -251,7 +253,7 @@ generated quantities{
 
         }
 
-        log_lik[i,s] = log_sum_exp(
+        log_lik[i] += log_sum_exp(
         log_psi[i, s] + log_p_yz1,
         log1m_psi[i, s] + log_p_yz0
         );
