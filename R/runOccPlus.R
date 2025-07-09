@@ -380,8 +380,7 @@ runOccPlus <- function(data,
               init = init_fun,
               # elbo_samples = 500,
               eval_elbo = 200,
-              tol_rel_obj = 0.00005,
-              max_treedepth = 20,
+              tol_rel_obj = 0.0005,
               output_samples = numSamples)
 
   matrix_of_draws <- as.matrix(vb_fit)
