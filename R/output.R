@@ -843,6 +843,116 @@ plotCollectionRates <- function(fitmodel,
 
 }
 
+#' plotFPTPStage2Rates
+#'
+#' True and false positives rates at the lab stage for each species.
+#'
+#' @details
+#' Plots the 95% credible interval of the true and false positives at the lab stage
+#'
+#' @param fitmodel Output from the function runOccPlus
+#' @param idx_species Indexes of the species to be plotted (leave out to plot all the species).
+#'
+#' @return A ggplot object
+#'
+#' @examples
+#' \dontrun{
+#' plotFPTPStage2Rates(fitmodel, idx_species = 1:5)
+#' }
+#'
+#' @export
+#' @import dplyr
+#' @import stringr
+#' @import ggplot2
+#'
+plotFPTPStage2Rates <- function(fitmodel,
+                               idx_species = NULL,
+                               primerName = NULL){
+
+  matrix_of_draws <- fitmodel$matrix_of_draws
+
+  S <- fitmodel$infos$S
+  # ncov_theta <- fitmodel$infos$ncov_psi
+  speciesNames <- fitmodel$infos$speciesNames
+  primerNames <- fitmodel$infos$primerNames
+
+  if(is.null(idx_species)){
+    idx_species <- 1:S
+  }
+
+  if(is.null(primerName)){
+    primerName <- primerNames[1]
+  }
+
+  p_output <- matrix_of_draws[,grepl("p\\[", colnames(matrix_of_draws))]
+  q_output <- matrix_of_draws[,grepl("q\\[", colnames(matrix_of_draws))]
+
+  data_plot_p <- apply(p_output, 2, function(x) {
+    quantile(x, probs = c(0.025, 0.975))
+  }) %>%
+    t %>%
+    as.data.frame %>%
+    rename(p1 = `2.5%`,
+           p2 = `97.5%`)
+
+  data_plot_q <- apply(q_output, 2, function(x) {
+    quantile(x, probs = c(0.025, 0.975))
+  }) %>%
+    t %>%
+    as.data.frame %>%
+    rename(q1 = `2.5%`,
+           q2 = `97.5%`)
+
+  texts <- rownames(data_plot_p)
+  idx_speciesprimer <- stringr::str_match(texts, "\\[(\\d+),(\\d+)\\]")
+
+  data_plot <- cbind(data_plot_p, data_plot_q) %>%
+    mutate(Species = as.numeric(idx_speciesprimer[,3]),
+           Primer = as.numeric(idx_speciesprimer[,2])) %>%
+    mutate(Species = speciesNames[Species],
+           Primer = primerNames[Primer]) %>%
+    mutate(speciesOrder = order(p1)) %>%
+    filter(Species %in% speciesNames[idx_species]) %>%
+    filter(Primer == primerName)
+
+  # orderSpecies <- order(data_plot$`2.5%`[data_plot$Primer == data_plot$Primer[1]])
+
+  detectionRates <- data_plot %>%
+    ggplot()  +
+    geom_errorbar(aes(x = factor(Species, level = speciesNames[speciesOrder]),
+                      # factor(Species, level = speciesNames[orderSpecies]),
+                      ymin = p1,
+                      ymax = p2,
+                      color = "TP rate"), position = position_dodge(width = .15), # Use the SAME width as geom_col
+                  width = .5) +
+    geom_errorbar(aes(x = factor(Species, level = speciesNames[speciesOrder]),
+                      # factor(Species, level = speciesNames[orderSpecies]),
+                      ymin = q1,
+                      ymax = q2,
+                      color = "FP rate"), position = position_dodge(width = .15), # Use the SAME width as geom_col
+                  width = .5) +
+    xlab("Species") +
+    # ylim(c(0,1)) +
+    ggtitle("Detection rates") +
+    theme_bw() +
+    # ylim(c(0,1)) +
+    ylab("Detection probability") +
+    scale_color_manual(
+      name = "Colour",
+      values = c("TP rate" = "blue", "FP rate" = "red")
+    ) +
+    theme(
+      axis.text = element_text(angle = 0,
+                               size = 8),
+      axis.title = element_text(size = 12, face = "bold"),
+      plot.title = element_text(hjust = .5,
+                                size = 15)
+    ) + coord_flip()
+
+  detectionRates
+
+}
+
 #' plotDetectionRates
 #'
 #' True positives rates at the lab stage for each species.

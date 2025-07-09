@@ -80,7 +80,7 @@ parameters {
   real<lower = 0> sigma1;
 
   real<lower = 0, upper = 1> p[maxL, S];
-  real<lower = 0, upper = 1> theta0[S];
+  real<lower = 0, upper = .4> theta0[S];
   real<lower = 0, upper = 1> q[maxL, S];
 
 }

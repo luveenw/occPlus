@@ -337,7 +337,7 @@ runOccPlus <- function(data,
                    b_theta0 = prior_btheta0)
 
   init_fun <- function(...) list(
-    beta_theta = matrix(0, ncov_theta, S),
+    beta_theta = rbind(matrix(1, 1, S), matrix(0, ncov_theta - 1, S)),
     theta0 = rep(0.05, S),
     p = matrix(.95, L, S),
     q = matrix(.05, L, S),
@@ -365,8 +365,7 @@ runOccPlus <- function(data,
 
   params <- c("beta_psi","beta_ord","beta_theta",
               "beta0_psi","U", "LL","E","p","q","theta0",
-              "logit_psi",
-              "log_lik"
+              "logit_psi", "log_lik"
   )
 
   if(!threshold){
@@ -375,13 +374,15 @@ runOccPlus <- function(data,
 
   vb_fit <-
     rstan::vb(model0, data = edna_dat,
-    # rstan::vb(model, data = edna_dat,
-               algorithm = "meanfield",
-               pars = params,
-               init = init_fun,
-               # elbo_samples = 500,
-               tol_rel_obj = 0.0001,
-               output_samples = numSamples)
+              # rstan::vb(model, data = edna_dat,
+              algorithm = "meanfield",
+              pars = params,
+              init = init_fun,
+              # elbo_samples = 500,
+              eval_elbo = 200,
+              tol_rel_obj = 0.00005,
+              max_treedepth = 20,
+              output_samples = numSamples)
 
   matrix_of_draws <- as.matrix(vb_fit)
 
