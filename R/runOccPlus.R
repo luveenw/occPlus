@@ -279,7 +279,7 @@ runOccPlus <- function(data,
     prior_beta_theta_sd <- 1
     prior_atheta0 <- 1
     prior_btheta0 <- 20
-    prior_ap <- 20
+    prior_ap <- 5
     prior_bp <- 1
     prior_aq <- 1
     prior_bq <- 20
@@ -336,15 +336,29 @@ runOccPlus <- function(data,
                    a_theta0 = prior_atheta0,
                    b_theta0 = prior_btheta0)
 
-  init_fun <- function(...) list(
-    beta_theta = rbind(matrix(1, 1, S), matrix(0, ncov_theta - 1, S)),
-    theta0 = rep(0.05, S),
-    p = matrix(.95, L, S),
-    q = matrix(.05, L, S),
-    sigma0 = .5,
-    sigma1 = 1,
-    mu1 = 3
-  )
+  if(!threshold){
+    init_fun <- function(...) list(
+      beta_theta = rbind(matrix(1, 1, S), matrix(0, ncov_theta - 1, S)),
+      theta0 = rep(0.05, S),
+      p = matrix(.95, L, S),
+      q = matrix(.05, L, S),
+      sigma0 = .5,
+      sigma1 = 1,
+      mu1 = 3
+    )
+
+  } else {
+
+    # init_fun <- function(chain_id = 1) {
+    init_fun <- function(...) {
+      list(
+        p = matrix(.95, L, S),
+        q = matrix(.05, L, S),
+        theta0 = rep(0.05, S)
+      )
+    }
+
+  }
 
   print("Loading STAN")
 
@@ -357,7 +371,6 @@ runOccPlus <- function(data,
   }
 
 
-  model0 <- rstan::stan_model(file = fileCode)
   # model0 <- rstan::stan_model(file = "code.stan")
 
   # model <- rstan::stan_model(file = system.file("stan/code_optimised.stan",
@@ -372,16 +385,36 @@ runOccPlus <- function(data,
     params <- c(params,"mu1","sigma0", "sigma1","pi0")
   }
 
+
+  # model0 <- rstan::stan_model(file = fileCode)
+
+  # vb_fit <-
+  #   # rstan::vb(
+  #   rstan::sampling(
+  #     model0, data = edna_dat,
+  #             pars = params,
+  #
+  #     chains = 3,
+  #     iter = 2000,
+  #     init = init_fun
+  #             # algorithm = "meanfield",
+  #             # init = init_fun,
+  #             # # elbo_samples = 500,
+  #             # eval_elbo = 200,
+  #             # iter = 10000,
+  #             # tol_rel_obj = 0.00001,
+  #             # output_samples = numSamples
+  #     )
+
   vb_fit <-
-    rstan::vb(model0, data = edna_dat,
-              # rstan::vb(model, data = edna_dat,
-              algorithm = "meanfield",
-              pars = params,
-              init = init_fun,
-              # elbo_samples = 500,
-              eval_elbo = 200,
-              tol_rel_obj = 0.0005,
-              output_samples = numSamples)
+    stan(
+      file = fileCode,
+      data = edna_dat,
+      chains = 1,
+      iter = 2000,
+      control = list(adapt_delta = 0.99,
+                     max_treedepth = 20)
+      )
 
   matrix_of_draws <- as.matrix(vb_fit)
 

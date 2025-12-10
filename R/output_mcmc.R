@@ -116,7 +116,7 @@ plotOccupancyCovariates <- function(fitmodel,
     as.data.frame %>%
     mutate(Species = speciesNames[idx_species]) %>%
     mutate(speciesOrder = order(`2.5%`)) #%>%
-    # filter(Species %in% speciesNames[idx_species])
+  # filter(Species %in% speciesNames[idx_species])
 
   orderSpecies <- order(data_plot$`2.5%`)
 
@@ -157,20 +157,18 @@ plotOccupancyCovariates <- function(fitmodel,
 #' @import dplyr
 #' @import ggplot2
 #'
-returnOrdinationCovariatesOutput <- function(fitmodel){
+returnOrdinationCovariatesOutput <- function(fitModel){
 
   # if(is.null(covName)){
   #   stop("No name provided")
   # }
 
-  matrix_of_draws <- fitmodel$matrix_of_draws
-
-  d <- fitmodel$infos$d
-  ncov_ord <- fitmodel$infos$ncov_ord
-  speciesNames <- fitmodel$infos$speciesNames
-  ordCovNames <- colnames(fitmodel$X_ord)
-  nsites <- length(fitmodel$infos$siteNames)
-  nspecies <- length(fitmodel$infos$speciesNames)
+  d <- fitModel$infos$d
+  ncov_ord <- fitModel$infos$ncov_ord
+  speciesNames <- fitModel$infos$speciesNames
+  ordCovNames <- colnames(fitModel$X_ord)
+  nsites <- length(fitModel$infos$siteNames)
+  nspecies <- length(fitModel$infos$speciesNames)
 
   # if(length(idxcov) == 0){
   #   stop("Covariate name not found. If you are using a categorical covariates,
@@ -183,28 +181,26 @@ returnOrdinationCovariatesOutput <- function(fitmodel){
   # }
 
   {
-    U_output0 <-
-      matrix_of_draws[,grepl("U\\[", colnames(matrix_of_draws))]
-    L_output0 <-
-      matrix_of_draws[,grepl("L\\[", colnames(matrix_of_draws))]
-    beta_ord_output0 <-
-      matrix_of_draws[,grepl("beta_ord\\[", colnames(matrix_of_draws))]
+    L_output0 <- fitModel$results_output$LL_output
+    beta_ord_output0 <- fitModel$results_output$beta_ord_output
+    U_output0 <- fitModel$results_output$U_output
 
-    niter <- nrow(U_output0)
+    niter <- nrow(L_output0)
 
-    U_output <- array(NA, dim = c(niter, nsites, d))
-    for(iter in 1:niter){
-      U_output[iter,,] <- matrix(U_output0[iter,], nsites, d, byrow = F)
-    }
+    L_output0 <- apply(L_output0, c(1,2), c)
+    L_output0 <- aperm(L_output0, c(1,3,2))
+
+    beta_ord_output0 <- apply(beta_ord_output0, c(1,2), c)
+    # beta_ord_output0 <- aperm(beta_ord_output0, c(1,3,2))
 
     L_output <- array(NA, dim = c(niter, d, nspecies))
     for(iter in 1:niter){
-      L_output[iter,,] <- matrix(L_output0[iter,], d, nspecies, byrow = F)
+      L_output[iter,,] <- matrix(L_output0[iter,,], d, nspecies, byrow = F)
     }
 
     beta_ord_output <- array(NA, dim = c(niter, ncov_ord, d))
     for(iter in 1:niter){
-      beta_ord_output[iter,,] <- matrix(beta_ord_output0[iter,], ncov_ord, d, byrow = F)
+      beta_ord_output[iter,,] <- matrix(beta_ord_output0[iter,,], ncov_ord, d, byrow = F)
     }
 
     niter <- nrow(L_output)
@@ -230,7 +226,6 @@ returnOrdinationCovariatesOutput <- function(fitmodel){
 
         L_current <- L_output[iter,,]
         # E_current <- E_output[iter,,]
-        U_current <- U_output[iter,,]
         beta_ord_current <- beta_ord_output[iter,,]
 
         qr_decomp <- qr(L_current)
@@ -243,11 +238,9 @@ returnOrdinationCovariatesOutput <- function(fitmodel){
         betapsiord_new <- beta_ord_current %*% Q2
         # E_new <- E_current %*% Q2
         L_new <- invQ2 %*% L_current
-        U_new <- U_current %*% Q2
 
         L_output_reparam[iter,,] <- L_new
         # E_output_reparam[iter,] <- E_new
-        U_output_reparam[iter,,] <- U_new
         beta_ord_output_reparam[iter,,] <- betapsiord_new
       }
 
@@ -865,8 +858,8 @@ plotCollectionRates <- function(fitmodel,
 #' @import ggplot2
 #'
 plotFPTPStage2Rates <- function(fitmodel,
-                               idx_species = NULL,
-                               primerName = NULL){
+                                idx_species = NULL,
+                                primerName = NULL){
 
   matrix_of_draws <- fitmodel$matrix_of_draws
 
@@ -1014,7 +1007,7 @@ plotDetectionRates <- function(fitmodel,
   detectionRates <- data_plot %>%
     ggplot(aes(x =
                  factor(Species, level = speciesNames),
-                 # factor(Species, level = speciesNames[orderSpecies]),
+               # factor(Species, level = speciesNames[orderSpecies]),
                ymin = `2.5%`,
                ymax = `97.5%`,
                color = factor(Primer),
@@ -1344,15 +1337,13 @@ plotReadIntensity <- function(fitmodel){
 
 }
 
-generateCorrelationMatrixOutput <- function(fitmodel,
+generateCorrelationMatrixOutput <- function(fitModel,
                                             idx_species = NULL){
 
-  matrix_of_draws <- fitmodel$results_output
-
-  L_output <- matrix_of_draws$LL_output
-  beta0_psi_output <- matrix_of_draws$beta_psi_output
-  S <- fitmodel$infos$S
-  d <- fitmodel$infos$d
+  L_output <- fitModel$results_output$LL_output
+  beta_psi_output <- fitModel$results_output$beta_psi_output
+  S <- fitModel$infos$S
+  d <- fitModel$infos$d
 
   if(is.null(idx_species)){
     idx_species <- 1:S
@@ -1360,11 +1351,16 @@ generateCorrelationMatrixOutput <- function(fitmodel,
 
   niter <- nrow(L_output)
 
+  L_output <- apply(L_output, c(1,2), c)
+  L_output <- aperm(L_output, c(1,3,2))
+
+  beta_psi_output <- apply(beta_psi_output, c(1,2), c)
+
   Lambda_output <- array(NA, dim = c(niter, S, S))
 
   for (iter in 1:niter) {
-    L_output_current <- matrix(L_output[iter,], S, d, byrow = T)
-    beta0psi_output_current <- matrix(beta0_psi_output[iter,], S, 1, byrow = T)
+    L_output_current <- matrix(L_output[iter,,], S, d, byrow = T)
+    beta0psi_output_current <- matrix(beta_psi_output[iter,1,], S, 1, byrow = T)
     L_all_output_current <- cbind(L_output_current, beta0psi_output_current)
 
     Lambda_output[iter,,] <- cov2cor(L_all_output_current %*% t(L_all_output_current))
@@ -1373,8 +1369,6 @@ generateCorrelationMatrixOutput <- function(fitmodel,
   Lambda_output[,idx_species, idx_species]
 
 }
-
-
 
 
 #' plotCorrelationMatrix
@@ -1512,7 +1506,7 @@ plotSigElementsCorMatrix <- function(fitmodel,
 #'
 computeOccupancyProbs <- function(fitmodel#,
                                   # confidence = .95
-                                  ){
+){
 
 
   matrix_of_draws <- fitmodel$matrix_of_draws
