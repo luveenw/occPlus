@@ -27,18 +27,26 @@ options(warning = -1)
 ```{r setup, include = FALSE}
 library(occPlus)
 ```
+## Overview
+The `occPlus` package simplifies the process of modeling occupancy across multiple vertebrate
+species using aquatic environmental DNA metabarcoding. It provides tools for occupancy model 
+fitting and result visualization in a reproducible workflow.
 
-The model can be run using the `runOccPlus` function.
+**Source paper:** High Quality, Granular, Timely, Trustworthy and Efficient Vertebrate Species 
+Distribution Data Across a 30,000 km² Protected Area Complex. doi:10.1111/ele.70302
 
-The arguments of the function are:
+## Data model
+- occurrence table: one row per record, required fields (species, lon, lat, date, source).
+- meta flags: per-record QC flags and provenance columns.
+- derived objects: aggregated summaries and raster/vector outputs.
 
-- data: which we explain below;
-- d: number of factors;
-- occCovariates: vector of the name of the covariates for the occupancy probabilities. 
-- ordCovariates: vector of the name of the covariates for the ordination. 
-- detCovariates: vector of the name of the covariates for the detection probabilities. 
+## Typical usage
+1. Ingest raw records (keep originals).
+2. Standardize fields and coordinates.
+3. Enrich with environmental or detection-effort layers.
+4. Aggregate and export reproducible summary artifacts.
 
-## Data preparation
+### Data preparation
 
 The data object is a list of two elements: `info` and `OTU`. 
 
@@ -49,24 +57,29 @@ number of replicates analyzed and columns:
 - `Sample`: name (or index) of the sample from which this replicate was analyzed;
 - `Primer`: name (or index) of the primer used in this replicate;
 
-
-```{r}
-head(data$info)
-```
-
 `data$OTU` is a matrix of dimension $N \times S$, where $S$ is the number of 
 species, where each element is the number of reads of the species in that replicate.
 If data are missing, these can be coded as `NA`.
 
-```{r}
-head(data$OTU)
-```
+### Running the model
+The model can be run using the `runOccPlus` function.
 
-## Model fitting
+#### Function parameters
+- data: see **Data preparation** section above;
+- d: number of factors;
+- occCovariates: vector of the name of the covariates for the occupancy probabilities. 
+- ordCovariates: vector of the name of the covariates for the ordination. 
+- detCovariates: vector of the name of the covariates for the detection probabilities. 
 
-Next, we can run the model by typing 
-
+**Example:**
 ```{r, eval = FALSE}
+library(occPlus)
+
+# 1. load occurrence data (should be in the form described in the Data preparation section)
+dat <- read.csv("path/to/occurrences.csv")
+
+# 2. add spatial precision / grid aggregation
+dat_grid <- occPlus::assign_grain(dat_clean, grain = 1000)  # metres
 fitmodel  <- runOccPlus(data,
                         d = 2,
                         occCovariates = c("X_psi.1","X_psi.2"),
@@ -220,3 +233,6 @@ plotSigElementsCorMatrix(fitmodel)
 
 We note that this is the \textit{residual} covariance matrix, \textbf{after} 
 accounting for occupancy covariates but accounting for ordination covariates.
+
+#### References
+- Paper: High Quality, Granular, Timely, Trustworthy and Efficient Vertebrate Species Distribution Data Across a 30,000 km² Protected Area Complex. doi:10.1111/ele.70302
