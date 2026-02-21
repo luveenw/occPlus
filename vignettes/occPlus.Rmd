@@ -1,29 +1,53 @@
 ---
-title: "occPlus"
-output: 
+title: "Introduction to occPlus"
+output:
   rmarkdown::html_vignette:
-    fig.width: 7
-    fig.height: 4.5
-    warning: false
-    message: false
+    toc: true
+    toc_depth: 3
+    fig_width: 7
+    fig_height: 4.5
 vignette: >
-  %\VignetteIndexEntry{occPlus}
+  %\VignetteIndexEntry{Introduction to occPlus}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  warnings = FALSE,
-  fig.width = 7,
-  fig.height = 4.5,
-  comment = "#>"
+  collapse   = TRUE,
+  comment    = "#>",
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 7,
+  fig.height = 4.5
 )
 
 options(warning = -1)
 ```
 
+## Overview
+
+`occPlus` fits a Bayesian hierarchical occupancy model designed for
+multi-species, multi-marker eDNA metabarcoding data. The model
+simultaneously infers species occupancy probabilities, sample-level
+collection (detection) probabilities, and primer-level true- and
+false-positive read rates—all while accounting for residual species
+co-occurrence via a latent factor structure.
+
+### When to use `occPlus`
+
+| Feature | Details |
+|---|---|
+| Data type | eDNA metabarcoding read counts (or binary detections) |
+| Survey design | Multiple sites, samples per site, PCR replicates per sample, one or more primers |
+| Species | Any number; modelled jointly |
+| Inference engine | Bayesian inference via Markov Chain Monte Carlo |
+| False-positive modelling | Two-stage: field (sample) and lab (PCR replicate) |
+| Covariate support | Occupancy, detection, and ordination (latent factor) covariates |
+
+---
+
+## Usage
 ```{r setup, include = FALSE}
 library(occPlus)
 ```
@@ -36,7 +60,7 @@ The arguments of the function are:
 - d: number of factors;
 - occCovariates: vector of the name of the covariates for the occupancy probabilities. 
 - ordCovariates: vector of the name of the covariates for the ordination. 
-- collCovariates: vector of the name of the covariates for the detection probabilities. 
+- collCovariates: vector of the name of the covariates for the detection probabilities.
 
 ## Data preparation
 
