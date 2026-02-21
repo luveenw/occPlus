@@ -8,3 +8,6 @@ inst/doc
 .RData
 .DS_Store
 Thumbs.db
+.Rproj.user
+.httr-oauth
+.quarto
