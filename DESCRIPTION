@@ -11,11 +11,12 @@ Authors@R: c(
   )
 Description: More about what it does (maybe more than one line).
     Continuation lines should be indented.
-License: What license is it under?
+License: MIT + file LICENSE
 Encoding: UTF-8
 Imports: 
  rstan (>= 2.26.0),
     ggplot2 (>= 3.4.0),
+    here,
     dplyr,
     ggplot2,
     tidyr,
@@ -26,7 +27,7 @@ Imports:
 Remotes:
     kassambara/ggcorrplot
 LazyData: true
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Suggests: 
     knitr,
     rmarkdown
