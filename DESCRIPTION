@@ -7,15 +7,31 @@ Authors@R: c(
       "Alex", "Diana",
       email = "ad23269@essex.ac.uk",
       role = c("aut", "cre")
+    ),
+    person(
+      "Luveen", "Wadhwani",
+      email = "luveen.w@columbia.edu",
+      role = c("aut")
     )
   )
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
+Description: Implements a multi-species occupancy model for environmental DNA
+    (eDNA) read-count data, following the statistical framework of Griffin et al.
+    (2020) <doi:10.1111/rssc.12390>. The model explicitly accounts for
+    false positive and false negative observation errors at both the field
+    sampling stage and the laboratory amplification stage of eDNA surveys.
+    Species co-occurrence patterns are captured through a latent factor model,
+    enabling concurrent ordination alongside occupancy estimation. Model
+    parameters are inferred via Bayesian methods, using either a Stan-based
+    Hamiltonian Monte Carlo sampler or a custom Gibbs MCMC backend. Functions
+    are provided for model fitting, posterior summarisation, and visualisation
+    of occupancy probabilities, detection rates, covariate effects, and
+    inter-species correlation matrices.
 License: Apache License (>= 2)
 Encoding: UTF-8
-Imports: 
- rstan (>= 2.26.0),
+Imports:
+    rstan (>= 2.26.0),
     ggplot2 (>= 3.4.0),
+    here,
     dplyr,
     ggplot2,
     tidyr,
@@ -24,15 +40,20 @@ Imports:
     stats,
     ggcorrplot,
     Rcpp
-LinkingTo: 
+LinkingTo:
     Rcpp,
     RcppArmadillo
 Remotes:
     kassambara/ggcorrplot
 LazyData: true
 LazyDataCompression: xz
-RoxygenNote: 7.3.2
-Suggests: 
+RoxygenNote: 7.3.3
+Config/testthat/edition: 3
+Suggests:
     knitr,
-    rmarkdown
+    rmarkdown,
+    loo,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
+Depends:
+    R (>= 3.5)
