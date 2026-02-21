@@ -1,10 +1,4 @@
 
-logit <- function(x){
-  log(x / (1 - x))
-}
-
-logistic <- function(x) 1 / (1 + exp(-x))
-
 #' returnOccupancyCovariates
 #'
 #' Occupancy covariate coefficients.
@@ -184,11 +178,11 @@ returnOrdinationCovariatesOutput <- function(fitmodel){
 
   {
     U_output0 <-
-      matrix_of_draws[,grepl("U\\[", colnames(matrix_of_draws))]
+      matrix_of_draws[, grepl("^U\\[", colnames(matrix_of_draws), perl = TRUE)]
     L_output0 <-
-      matrix_of_draws[,grepl("L\\[", colnames(matrix_of_draws))]
+      matrix_of_draws[, grepl("^LL\\[", colnames(matrix_of_draws), perl = TRUE)]
     beta_ord_output0 <-
-      matrix_of_draws[,grepl("beta_ord\\[", colnames(matrix_of_draws))]
+      matrix_of_draws[, grepl("^beta_ord\\[", colnames(matrix_of_draws), perl = TRUE)]
 
     niter <- nrow(U_output0)
 
@@ -1347,10 +1341,7 @@ plotReadIntensity <- function(fitmodel){
 generateCorrelationMatrixOutput <- function(fitmodel,
                                             idx_species = NULL){
 
-  matrix_of_draws <- fitmodel$results_output
-
-  L_output <- matrix_of_draws$LL_output
-  beta0_psi_output <- matrix_of_draws$beta_psi_output
+  matrix_of_draws <- fitmodel$matrix_of_draws
   S <- fitmodel$infos$S
   d <- fitmodel$infos$d
 
@@ -1358,19 +1349,26 @@ generateCorrelationMatrixOutput <- function(fitmodel,
     idx_species <- 1:S
   }
 
-  niter <- nrow(L_output)
+  # Extract LL[ (factor loadings, d x S) and beta0_psi[ (species intercepts, S)
+  LL_raw <- matrix_of_draws[, grepl("^LL\\[", colnames(matrix_of_draws), perl = TRUE),
+                             drop = FALSE]
+  beta0_raw <- matrix_of_draws[, grepl("^beta0_psi\\[", colnames(matrix_of_draws), perl = TRUE),
+                                drop = FALSE]
+
+  niter <- nrow(LL_raw)
 
   Lambda_output <- array(NA, dim = c(niter, S, S))
 
   for (iter in 1:niter) {
-    L_output_current <- matrix(L_output[iter,], S, d, byrow = T)
-    beta0psi_output_current <- matrix(beta0_psi_output[iter,], S, 1, byrow = T)
-    L_all_output_current <- cbind(L_output_current, beta0psi_output_current)
-
-    Lambda_output[iter,,] <- cov2cor(L_all_output_current %*% t(L_all_output_current))
+    # LL is stored as [d, S] in column-major order matching Stan's matrix[d, S]
+    LL_current  <- matrix(LL_raw[iter, ],  nrow = d, ncol = S, byrow = FALSE)
+    b0_current  <- matrix(beta0_raw[iter, ], nrow = S, ncol = 1, byrow = FALSE)
+    # Form S x (d+1) matrix: loadings transposed | intercept
+    L_aug <- cbind(t(LL_current), b0_current)
+    Lambda_output[iter, , ] <- cov2cor(L_aug %*% t(L_aug))
   }
 
-  Lambda_output[,idx_species, idx_species]
+  Lambda_output[, idx_species, idx_species]
 
 }
 
