@@ -1,5 +1,8 @@
 install.packages(c("devtools", "roxygen2", "usethis"))
+
 usethis::create_package("/home/luveenw/Dropbox/Documents/Luveen Wadhwani/OneDrive/Documents/Luveen-Obsidian/03 - Projects/Columbia/00 - Thesis/occPlus")
+
 usethis::use_git()
 usethis::use_mit_license()
+
 devtools::document()
