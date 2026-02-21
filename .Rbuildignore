@@ -2,3 +2,9 @@
 ^\.Rproj\.user$
 ^doc$
 ^Meta$
+^occPlus\.Rproj$
+^LICENSE\.md$
+^dev$
+^.*\.idea$
+^\.positai$
+^\.claude$
