@@ -13,8 +13,8 @@ Description: More about what it does (maybe more than one line).
     Continuation lines should be indented.
 License: MIT + file LICENSE
 Encoding: UTF-8
-Imports: 
- rstan (>= 2.26.0),
+Imports:
+    rstan (>= 2.26.0),
     ggplot2 (>= 3.4.0),
     here,
     dplyr,
@@ -28,7 +28,8 @@ Remotes:
     kassambara/ggcorrplot
 LazyData: true
 RoxygenNote: 7.3.3
-Suggests: 
+Suggests:
     knitr,
-    rmarkdown
+    rmarkdown,
+    loo
 VignetteBuilder: knitr
