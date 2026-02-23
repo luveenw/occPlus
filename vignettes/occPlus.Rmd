@@ -1,28 +1,61 @@
 ---
-title: "occPlus"
-output: 
+title: "Introduction to occPlus"
+output:
   rmarkdown::html_vignette:
-    fig.width: 7
-    fig.height: 4.5
+    toc: true
+    toc_depth: 3
+    fig_width: 7
+    fig_height: 4.5
     warning: false
     message: false
 vignette: >
-  %\VignetteIndexEntry{occPlus}
+  %\VignetteIndexEntry{Introduction to occPlus}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  warnings = FALSE,
-  fig.width = 7,
-  fig.height = 4.5,
-  comment = "#>"
+  collapse   = TRUE,
+  comment    = "#>",
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 7,
+  fig.height = 4.5
 )
 
 options(warning = -1)
 ```
+
+## Overview
+
+`occPlus` fits a Bayesian hierarchical occupancy model designed for
+**multi-species, multi-marker eDNA metabarcoding data**. The model
+simultaneously infers species occupancy probabilities, sample-level
+collection (detection) probabilities, and primer-level true- and
+false-positive read rates—all while accounting for residual species
+co-occurrence via a latent factor structure.
+
+The method is described in full in:
+
+> Ji Y, Diana A, Li X, Matechou E, Griffin JE, Liu S, *et al.* (2025).
+> High Quality, Granular, Timely, Trustworthy and Efficient Vertebrate
+> Species Distribution Data Across a 30,000 km² Protected Area Complex.
+> *Ecology Letters*, 28(12).
+> <https://doi.org/10.1111/ele.70302>
+
+### When to use `occPlus`
+
+| Feature | Details |
+|---|---|
+| Data type | eDNA metabarcoding read counts (or binary detections) |
+| Survey design | Multiple sites, samples per site, PCR replicates per sample, one or more primers |
+| Species | Any number; modelled jointly |
+| Inference engine | Bayesian MCMC |
+| False-positive modelling | Two-stage: field (sample) and lab (PCR replicate) |
+| Covariate support | Occupancy, detection, and ordination (latent factor) covariates |
+
+---
 
 ```{r setup, include = FALSE}
 library(occPlus)
@@ -34,9 +67,9 @@ The arguments of the function are:
 
 - data: which we explain below;
 - d: number of factors;
-- occCovariates: vector of the name of the covariates for the occupancy probabilities. 
-- ordCovariates: vector of the name of the covariates for the ordination. 
-- collCovariates: vector of the name of the covariates for the detection probabilities. 
+- occCovariates: vector of the name of the covariates for the occupancy probabilities.
+- ordCovariates: vector of the name of the covariates for the ordination.
+- collCovariates: vector of the name of the covariates for the detection probabilities.
 
 ## Data preparation
 
@@ -54,7 +87,7 @@ number of replicates analyzed and columns:
 head(data$info)
 ```
 
-`data$OTU` is a matrix of dimension $N \times S$, where $S$ is the number of 
+`data$OTU` is a matrix of dimension $N \times S$, where $S$ is the number of
 species, where each element is the number of reads of the species in that replicate.
 If data are missing, these can be coded as `NA`.
 
@@ -64,7 +97,7 @@ head(data$OTU)
 
 ## Model fitting
 
-Next, we can run the model by typing 
+Next, we can run the model by typing
 
 ```{r, eval = FALSE}
 fitmodel  <- runOccPlus(data,
@@ -117,17 +150,17 @@ There are several outputs we can obtain:
 First, we provide three functions for returning occupancy, ordination and detection
 covariate coefficients. The output is returned in the form (*niter* x *numberOfCovariates* x *numberOfSpecies*)
 
-```{r}
+```{r plot-det-covs, eval = FALSE}
 collCovariatesOutput <- returnDetectionCovariates(fitmodel)
 str(collCovariatesOutput)
 ```
 
-```{r}
+```{r return-ord-covs, eval = FALSE}
 ordCovariatesOutput <- returnOrdinationCovariatesOutput(fitmodel)
 str(ordCovariatesOutput)
 ```
 
-```{r}
+```{r plot-occ-covs, eval = FALSE}
 occCovariatesOutput <- returnOccupancyCovariates(fitmodel)
 str(occCovariatesOutput)
 ```
@@ -136,15 +169,15 @@ str(occCovariatesOutput)
 Next, we provide three functions for plotting occupancy, ordination and detection
 covariate coefficients:
 
-```{r}
+```{r plot-occ-covs1, eval = FALSE}
 plotOccupancyCovariates(fitmodel, idx_species = 1:10, covName = "X_psi.1")
 ```
 
-```{r}
+```{r return-ord-covs1, eval = FALSE}
 plotOrdinationCovariates(fitmodel, covName = "X_ord.1")
 ```
 
-```{r}
+```{r plot-det-covs1, eval = FALSE}
 plotDetectionCovariates(fitmodel, idx_species = 1:10, covName = "X_theta")
 ```
 
@@ -152,28 +185,28 @@ plotDetectionCovariates(fitmodel, idx_species = 1:10, covName = "X_theta")
 
 We can return baseline occupancy rates via
 
-```{r}
+```{r plot-occ-covs2, eval = FALSE}
 plotOccupancyRates(fitmodel, idx_species = 1:20)
 ```
 
-```{r}
+```{r plot-collection, eval = FALSE}
 plotCollectionRates(fitmodel, idx_species = 1:20)
 ```
 
 
-```{r}
+```{r plot-detection, eval = FALSE}
 plotDetectionRates(fitmodel, idx_species = 1:20)
 ```
 
 And false positives rates at the first stage (field stage):
 
-```{r}
+```{r plot-stage1-fp, eval = FALSE}
 plotStage1FPRates(fitmodel, idx_species = 1:20)
 ```
 
 And at the second stage (lab stage):
 
-```{r}
+```{r plot-stage2-fp, eval = FALSE}
 plotStage2FPRates(fitmodel, idx_species = 1:20)
 ```
 
@@ -198,7 +231,7 @@ The output is stored in the form (*iterations* x *sites* x *species*).
 `occPlus` estimates a distribution of reads for true and false positives. We can
 plot the two distributions via:
 
-```{r, fig.width=7, fig.height=4.5, warnings = FALSE}
+```{r plot-reads, fig.width=7, fig.height=4.5, warnings = FALSE}
 plotReadIntensity(fitmodel)
 ```
 
@@ -206,7 +239,7 @@ plotReadIntensity(fitmodel)
 
 We can plot the posterior median of the residual correlation matrix as
 
-```{r}
+```{r plot-cor}
 plotCorrelationMatrix(fitmodel)
 ```
 
@@ -214,9 +247,32 @@ plotCorrelationMatrix(fitmodel)
 We can show only the positively and negatively significant elements (positive in
 red and negative in blue)
 
-```{r}
+```{r plot-sig-cor}
 plotSigElementsCorMatrix(fitmodel)
 ```
 
-We note that this is the \textit{residual} covariance matrix, \textbf{after} 
+---
+
+## Citation
+
+We note that this is the \textit{residual} covariance matrix, \textbf{after}
 accounting for occupancy covariates but accounting for ordination covariates.
+
+If you use `occPlus` in published work, please cite:
+
+```
+Ji Y, Diana A, Li X, Matechou E, Griffin JE, Liu S, Luo M, Wu C,
+Bai R, Yao C, Yin T, Dong F, Wu F, Wang K, Yu Z, Chen X, Jiang X,
+Che J, Yu DW, Popescu VD (2025). High Quality, Granular, Timely,
+Trustworthy and Efficient Vertebrate Species Distribution Data Across
+a 30,000 km² Protected Area Complex. Ecology Letters, 28(12).
+doi:10.1111/ele.70302
+```
+
+---
+
+## Session information
+
+```{r session-info}
+sessionInfo()
+```

@@ -1,0 +1,326 @@
+---
+title: "Model interpretation and diagnostics"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+    fig_width: 7
+    fig_height: 4.5
+vignette: >
+  %\VignetteIndexEntry{Model interpretation and diagnostics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse   = TRUE,
+  comment    = "#>",
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 7,
+  fig.height = 4.5
+)
+```
+
+## Introduction
+
+This vignette covers how to critically interpret `occPlus` model output
+and perform basic diagnostic checks. It assumes familiarity with the
+introduction vignette (`vignette("occPlus")`).
+
+```{r load}
+library(occPlus)
+data("sampleresults")
+fitmodel <- sampleresults
+```
+
+---
+
+## Understanding the model parameters
+
+The `fitmodel` object returned by `runOccPlus()` is a list containing:
+
+| Element | Description |
+|---|---|
+| `vb_fit` | The `stanfit` object (full MCMC output) |
+| `matrix_of_draws` | Posterior samples as a matrix (iterations × parameters) |
+| `infos` | Named list of dimensions and labels |
+| `X_psi` | Design matrix for occupancy covariates |
+| `X_theta` | Design matrix for detection covariates |
+| `X_ord` | Design matrix for ordination covariates |
+
+The `infos` element contains:
+
+```{r infos}
+str(fitmodel$infos)
+```
+
+---
+
+## Posterior summary
+
+The full posterior is stored in `matrix_of_draws`. You can compute
+summary statistics for any parameter directly:
+
+```{r posterior-summary}
+draws <- fitmodel$matrix_of_draws
+
+# Names of all monitored parameters
+head(colnames(draws))
+
+# Posterior median and 95% CI for the first occupancy intercept
+beta0 <- draws[, grepl("beta0_psi\\[1\\]", colnames(draws))]
+quantile(beta0, probs = c(0.025, 0.5, 0.975))
+```
+
+For a tidy overview of all parameters, use `rstan::summary()`:
+
+```{r rstan-summary, eval = FALSE}
+rstan::summary(fitmodel$vb_fit)$summary[1:10, ]
+```
+
+---
+
+## MCMC diagnostics
+
+Before interpreting results, check that the sampler behaved well.
+
+### HMC diagnostics
+
+```{r hmc-diagnostics, eval = FALSE}
+rstan::check_hmc_diagnostics(fitmodel$vb_fit)
+```
+
+This prints counts of divergent transitions, saturated tree-depth
+proposals, and low Bayesian fraction of missing information (BFMI).
+Any non-zero divergence count warrants caution.
+
+### Effective sample size and R-hat
+
+```{r ess-rhat, eval = FALSE}
+fit_summary <- rstan::summary(fitmodel$vb_fit)$summary
+# Flag parameters with R-hat > 1.05 or ESS < 100
+problematic <- fit_summary[fit_summary[, "Rhat"] > 1.05 |
+                              fit_summary[, "n_eff"] < 100, ]
+head(problematic)
+```
+
+An $\hat{R} > 1.05$ for any parameter indicates incomplete convergence.
+Running additional chains (set `chains = 3` in `runOccPlus()`) and
+checking trace plots is recommended.
+
+### Trace plots
+
+```{r trace, eval = FALSE}
+rstan::traceplot(fitmodel$vb_fit,
+                 pars = c("mu1", "sigma0", "sigma1"),
+                 inc_warmup = FALSE)
+```
+
+Well-mixed chains that explore a stationary distribution without
+trending indicate good convergence. Sticky or drifting traces suggest
+the need for longer warm-up or revised priors.
+
+---
+
+## Interpreting occupancy covariate effects
+
+The occupancy coefficients $\boldsymbol{\beta}^{\psi}_s$ quantify the
+effect of site-level covariates on the *logit* occupancy probability,
+after accounting for the latent factor structure. A positive coefficient
+means the species is more likely to occupy sites with higher values of
+that covariate.
+
+```{r occ-effects}
+occCov <- returnOccupancyCovariates(fitmodel)
+# occCov[iter, covariate, species]
+# Posterior median effect of the first covariate on the first species
+median(occCov[, 1, 1])
+```
+
+Because covariates are automatically **scaled** before fitting, all
+coefficients are on a comparable scale and can be compared across
+covariates. A change of one posterior-median unit in $\beta^{\psi}$
+corresponds to a one-standard-deviation change in the covariate on the
+odds-ratio scale.
+
+---
+
+## Interpreting the read intensity model
+
+The parameters $\mu_1$, $\sigma_1$ (true positive reads) and $\sigma_0$
+(false positive reads) are shared across species and primers. They
+describe the global read-count distributions.
+
+```{r read-params}
+mu1    <- median(draws[, "mu1"])
+sigma1 <- median(draws[, "sigma1"])
+sigma0 <- median(draws[, "sigma0"])
+
+cat(sprintf("True positives:  log(reads+1) ~ N(%.2f, %.2f)\n", mu1, sigma1))
+cat(sprintf("False positives: log(reads+1) ~ N(0,    %.2f)\n", sigma0))
+cat(sprintf("Implied TP median reads: %.0f\n", exp(mu1) - 1))
+```
+
+```{r plot-reads}
+plotReadIntensity(fitmodel)
+```
+
+A large $\mu_1 / \sigma_0$ ratio and tight $\sigma_1$ indicate that
+true positives are well separated from background noise. If $\mu_1$
+is small relative to $\sigma_0$, the model may struggle to distinguish
+signal from noise; in that case consider using threshold mode
+(`threshold` argument) as a robustness check.
+
+---
+
+## Interpreting the latent factor structure
+
+### Factor scores (U)
+
+The factor scores $\mathbf{U} = \mathbf{X}^{\text{ord}}\mathbf{B}^{\text{ord}} + \mathbf{E}$
+represent a low-dimensional ordination of the sites in terms of their
+species composition after accounting for covariates. Nearby sites in
+the factor space tend to host similar species assemblages.
+
+Access the posterior of the factor scores:
+
+```{r factor-scores}
+U_draws <- draws[, grepl("^U\\[", colnames(draws))]
+n_sites  <- fitmodel$infos$S   # number of sites
+d        <- fitmodel$infos$d
+
+# Posterior median factor scores (sites × factors)
+U_median <- matrix(apply(U_draws, 2, median),
+                   nrow = length(fitmodel$infos$siteNames),
+                   ncol = d)
+head(U_median)
+```
+
+### Factor loadings (LL)
+
+The factor loadings $\boldsymbol{\Lambda}$ quantify how strongly each
+species loads on each latent dimension. Large positive loadings on the
+same factor indicate species that tend to co-occur above and beyond
+what the measured covariates explain.
+
+```{r factor-loadings}
+LL_draws  <- draws[, grepl("^LL\\[", colnames(draws))]
+LL_median <- matrix(apply(LL_draws, 2, median),
+                    nrow = d,
+                    ncol = fitmodel$infos$S)
+# Rows = factors, columns = species
+head(t(LL_median))
+```
+
+### Residual correlation matrix
+
+The residual correlation between species $s$ and $s'$ (from the factor
+model) can be visualised as described in the introduction vignette. A
+useful complementary view is to look at the *magnitude* of the median
+correlation across all species pairs:
+
+```{r cor-magnitude, eval = FALSE}
+plotCorrelationMatrix(fitmodel)
+```
+
+```{r sig-cor}
+plotSigElementsCorMatrix(fitmodel)
+```
+
+---
+
+## Model selection in detail
+
+### LOO-CV comparison
+
+```{r loo, eval = FALSE}
+library(loo)
+
+# Fit candidate models (substitute your data object)
+fit_d1 <- runOccPlus(sampledata, d = 1)
+fit_d2 <- runOccPlus(sampledata, d = 2)
+fit_d3 <- runOccPlus(sampledata, d = 3)
+
+loo1 <- loo(extract_log_lik(fit_d1$vb_fit), save_psis = TRUE)
+loo2 <- loo(extract_log_lik(fit_d2$vb_fit), save_psis = TRUE)
+loo3 <- loo(extract_log_lik(fit_d3$vb_fit), save_psis = TRUE)
+
+loo_compare(loo1, loo2, loo3)
+```
+
+The model with `elpd_diff = 0` provides the best predictive accuracy.
+A difference of more than ~4 elpd units between models is generally
+considered meaningful.
+
+### Pareto-k diagnostics
+
+```{r pareto-k, eval = FALSE}
+plot(loo2)
+```
+
+Pareto-$k$ values above 0.7 flag sites that are highly influential.
+These are sites where the model fit is poorly constrained by the data
+(e.g. very few visits, many missing replicates). Consider collecting
+additional samples at these sites or treating their occupancy estimates
+with caution.
+
+---
+
+## Posterior predictive checks
+
+A simple posterior predictive check compares the proportion of zeros
+predicted by the model to the observed proportion:
+
+```{r ppc, eval = FALSE}
+# Extract posterior predictive samples from the Stan fit
+# (requires adding generated quantities to the Stan model)
+# As a simpler check, compare marginal detection rates:
+
+obs_detection_rate <- mean(sampledata$OTU > 0, na.rm = TRUE)
+
+# Predicted detection rate from posterior collection and FP rates
+beta_theta_draws <- draws[, grepl("beta_theta\\[1,", colnames(draws))]
+theta_draws <- 1 / (1 + exp(-beta_theta_draws))
+pred_detection_rate <- mean(apply(theta_draws, 1, mean))
+
+cat(sprintf("Observed detection rate:  %.3f\n", obs_detection_rate))
+cat(sprintf("Predicted detection rate: %.3f\n", pred_detection_rate))
+```
+
+---
+
+## Common pitfalls
+
+### Identifiability of the factor model
+
+Factor models have a rotational indeterminacy: $\mathbf{U}\boldsymbol{\Lambda}^\top$
+is invariant to orthogonal rotations of $\mathbf{U}$ and
+$\boldsymbol{\Lambda}$. `occPlus` imposes an upper-triangular constraint
+on the loadings matrix to resolve this. The reparametrisation is applied
+automatically in `returnOrdinationCovariatesOutput()`.
+
+### Confounding between occupancy and detection
+
+If site-level covariates also drive detection (e.g. water volume
+collected correlates with altitude), including the same variable in
+both `occCovariates` and `detCovariates` leads to confounding. Use
+domain knowledge to assign covariates appropriately. The `plotReadIntensity()`
+output and the magnitude of FP rates are useful diagnostics for
+detection-process misspecification.
+
+### Species with very few detections
+
+Species detected at fewer than ~5 sites provide very little information
+for estimating occupancy effects. Their posterior distributions for
+$\boldsymbol{\beta}^{\psi}_s$ will be wide and dominated by the prior.
+Consider aggregating rare species or filtering them before modelling.
+
+---
+
+## Session information
+
+```{r session-info}
+sessionInfo()
+```
