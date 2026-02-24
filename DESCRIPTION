@@ -28,8 +28,10 @@ Remotes:
     kassambara/ggcorrplot
 LazyData: true
 RoxygenNote: 7.3.3
+Config/testthat/edition: 3
 Suggests:
     knitr,
     rmarkdown,
-    loo
+    loo,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
