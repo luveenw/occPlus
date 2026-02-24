@@ -1,10 +1,4 @@
 
-logit <- function(x){
-  log(x / (1 - x))
-}
-
-logistic <- function(x) 1 / (1 + exp(-x))
-
 #' returnOccupancyCovariates
 #'
 #' Occupancy covariate coefficients.
@@ -140,24 +134,26 @@ plotOccupancyCovariates <- function(fitmodel,
 }
 
 
-#' returnOrdinationCovariates
+#' returnOrdinationCovariatesOutput_mcmc
 #'
-#' Ordination covariate coefficients.
+#' Ordination covariate coefficients (MCMC backend).
 #'
 #' @details
-#' Returns the 95% credible interval of the ordination covariates coefficients
+#' Returns the reparametrised ordination covariate coefficients from a
+#' \code{runMCMCOccPlus()} fit.  For Stan-backend fits use
+#' \code{returnOrdinationCovariatesOutput()}.
 #'
-#' @param fitmodel Output from the function runOccPlus
-#' @param covName Name of the covariate to be plotted (same name as in data$info)
-#' @param idx_species Indexes of the species to be plotted (leave out to plot all the species).
+#' @param fitModel Output from \code{runMCMCOccPlus()}.
 #'
-#' @return A ggplot object
+#' @return A numeric array of dimensions \[niter, ncov_ord, d\].
 #'
-#' @export
-#' @import dplyr
-#' @import ggplot2
+#' @keywords internal
 #'
+<<<<<<<< HEAD:deprecated/R/output.R
 returnOrdinationCovariatesOutput <- function(fitmodel){
+========
+returnOrdinationCovariatesOutput_mcmc <- function(fitModel){
+>>>>>>>> 29e4a72 (chore(test): initial claude pass; pending code review):R/mcmc_output.R
 
   # if(is.null(covName)){
   #   stop("No name provided")
