@@ -1,8 +1,4 @@
 
-logistic <- function(x){
-  1 / (1 + exp(-x))
-}
-
 computeU <- function(X_ord, beta_ord, E){
   X_ord %*% beta_ord + E
 }
