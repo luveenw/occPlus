@@ -324,8 +324,6 @@ runMCMCOccPlus <- function(data,
 
   }
 
-
-
   # run MCMC
 
   print("Running MCMC")

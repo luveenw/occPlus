@@ -206,7 +206,7 @@ returnOrdinationCovariatesOutput <- function(fitModel){
     niter <- nrow(L_output)
 
     L_output_reparam <- L_output
-    U_output_reparam <- U_output
+    U_output_reparam <- U_output0
     # E_output_reparam <- E_output
     beta_ord_output_reparam <- beta_ord_output
 
@@ -788,8 +788,6 @@ plotOccupancyRates <- function(fitmodel,
 plotCollectionRates <- function(fitmodel,
                                 idx_species = NULL){
 
-  matrix_of_draws <- fitmodel$matrix_of_draws
-
   S <- fitmodel$infos$S
   ncov_theta <- fitmodel$infos$ncov_theta
   speciesNames <- fitmodel$infos$speciesNames
@@ -798,20 +796,17 @@ plotCollectionRates <- function(fitmodel,
     idx_species <- 1:S
   }
 
-  param <- "beta_theta"
-
-  samples_subset <- matrix_of_draws[,grepl(param, colnames(matrix_of_draws))]
-  samples_subset <- samples_subset[,1 + 0:(S-1)*ncov_theta]
-
+  samples_subset <- fitmodel$results_output$beta_theta_output[1,,,]
+  samples_subset <- apply(samples_subset, 1, c)
 
   data_plot <- apply(samples_subset, 2, function(x) {
     quantile(logistic(x), probs = c(0.025, 0.975))
   }) %>%
     t %>%
     as.data.frame %>%
-    mutate(Species = speciesNames) %>%
-    mutate(speciesOrder = order(`2.5%`)) %>%
-    filter(Species %in% speciesNames[idx_species])
+    mutate(Species = speciesNames) #%>%
+    # mutate(speciesOrder = order(`2.5%`)) %>%
+    # filter(Species %in% speciesNames[idx_species])
 
   orderSpecies <- order(data_plot$`2.5%`)
 
@@ -861,8 +856,6 @@ plotFPTPStage2Rates <- function(fitmodel,
                                 idx_species = NULL,
                                 primerName = NULL){
 
-  matrix_of_draws <- fitmodel$matrix_of_draws
-
   S <- fitmodel$infos$S
   # ncov_theta <- fitmodel$infos$ncov_psi
   speciesNames <- fitmodel$infos$speciesNames
@@ -876,8 +869,8 @@ plotFPTPStage2Rates <- function(fitmodel,
     primerName <- primerNames[1]
   }
 
-  p_output <- matrix_of_draws[,grepl("p\\[", colnames(matrix_of_draws))]
-  q_output <- matrix_of_draws[,grepl("q\\[", colnames(matrix_of_draws))]
+  p_output <- fitmodel$results_output$p_output
+  q_output <- fitmodel$results_output$q_output
 
   data_plot_p <- apply(p_output, 2, function(x) {
     quantile(x, probs = c(0.025, 0.975))
@@ -899,13 +892,17 @@ plotFPTPStage2Rates <- function(fitmodel,
   idx_speciesprimer <- stringr::str_match(texts, "\\[(\\d+),(\\d+)\\]")
 
   data_plot <- cbind(data_plot_p, data_plot_q) %>%
-    mutate(Species = as.numeric(idx_speciesprimer[,3]),
-           Primer = as.numeric(idx_speciesprimer[,2])) %>%
-    mutate(Species = speciesNames[Species],
-           Primer = primerNames[Primer]) %>%
-    mutate(speciesOrder = order(p1)) %>%
-    filter(Species %in% speciesNames[idx_species]) %>%
-    filter(Primer == primerName)
+    mutate(Species = speciesNames) %>%
+    mutate(speciesOrder = order(p1))
+  #
+  # data_plot <- cbind(data_plot_p, data_plot_q) %>%
+  #   mutate(Species = as.numeric(idx_speciesprimer[,3]),
+  #          Primer = as.numeric(idx_speciesprimer[,2])) %>%
+  #   mutate(Species = speciesNames[Species],
+  #          Primer = primerNames[Primer]) %>%
+  #   mutate(speciesOrder = order(p1)) %>%
+  #   filter(Species %in% speciesNames[idx_species]) %>%
+  #   filter(Primer == primerName)
 
   # orderSpecies <- order(data_plot$`2.5%`[data_plot$Primer == data_plot$Primer[1]])
 
@@ -968,7 +965,7 @@ plotFPTPStage2Rates <- function(fitmodel,
 #' @import ggplot2
 #'
 plotDetectionRates <- function(fitmodel,
-                               idx_species = NULL){
+                               idx_species = NULL){ft
 
   matrix_of_draws <- fitmodel$matrix_of_draws
 
@@ -1056,8 +1053,6 @@ plotDetectionRates <- function(fitmodel,
 plotStage1FPRates <- function(fitmodel,
                               idx_species = NULL){
 
-  matrix_of_draws <- fitmodel$matrix_of_draws
-
   S <- fitmodel$infos$S
   # ncov_theta <- fitmodel$infos$ncov_psi
   speciesNames <- fitmodel$infos$speciesNames
@@ -1067,9 +1062,8 @@ plotStage1FPRates <- function(fitmodel,
     idx_species <- 1:S
   }
 
-  param <- "theta0\\["
-
-  samples_subset <- matrix_of_draws[,grepl(param, colnames(matrix_of_draws))]
+  samples_subset <- fitmodel$results_output$theta0_output
+  samples_subset <- apply(samples_subset, 1, c)
 
   data_plot <- apply(samples_subset, 2, function(x) {
     quantile(x, probs = c(0.025, 0.975))
@@ -1132,8 +1126,6 @@ plotStage1FPRates <- function(fitmodel,
 plotStage2FPRates <- function(fitmodel,
                               idx_species = NULL){
 
-  matrix_of_draws <- fitmodel$matrix_of_draws
-
   S <- fitmodel$infos$S
   # ncov_theta <- fitmodel$infos$ncov_psi
   speciesNames <- fitmodel$infos$speciesNames
@@ -1143,36 +1135,31 @@ plotStage2FPRates <- function(fitmodel,
     idx_species <- 1:S
   }
 
-  param <- "q\\["
+  samples_subset <- fitmodel$results_output$q_output
+  samples_subset <- apply(samples_subset, c(1,2), c)
 
-  samples_subset <- matrix_of_draws[,grepl(param, colnames(matrix_of_draws))]
-
-  data_plot <- apply(samples_subset, 2, function(x) {
+  data_plot <- apply(samples_subset, 3, function(x) {
     quantile(x, probs = c(0.025, 0.975))
   }) %>%
     t %>%
     as.data.frame
 
-  texts <- rownames(data_plot)
-  idx_speciesprimer <- stringr::str_match(texts, "\\[(\\d+),(\\d+)\\]")
-
   data_plot <- data_plot %>%
-    mutate(Species = as.numeric(idx_speciesprimer[,3]),
-           Primer = as.numeric(idx_speciesprimer[,2])) %>%
-    mutate(Species = speciesNames[Species],
-           Primer = primerNames[Primer]) %>%
+    mutate(Species = speciesNames) %>%
     mutate(speciesOrder = order(`2.5%`)) %>%
     filter(Species %in% speciesNames[idx_species])
 
-  orderSpecies <- order(data_plot$`2.5%`[data_plot$Primer == data_plot$Primer[1]])
+  orderSpecies <- order(data_plot$`2.5%`)
 
   detectionRates <- data_plot %>%
-    ggplot(aes(x =
+    ggplot(aes(x = factor(Species, level =  speciesNames[orderSpecies]),
                  # factor(Species, level = speciesNames[orderSpecies]),
-                 factor(Species, level = speciesNames),
+                 # factor(Species, level = speciesNames),
                ymin = `2.5%`,
-               ymax = `97.5%`,
-               color = factor(Primer))) +
+               ymax = `97.5%`#,
+               # color = factor(Primer))
+    )
+    ) +
     geom_errorbar(position = position_dodge(width = .15), # Use the SAME width as geom_col
                   width = .5) +
     xlab("Species") +
