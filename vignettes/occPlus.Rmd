@@ -140,7 +140,7 @@ library(occPlus)
 
 # The package ships with an illustrative example dataset
 data("sampledata")
-
+sampledata <- data
 # Inspect the metadata
 head(sampledata$info)
 
@@ -228,7 +228,6 @@ the package:
 
 ```{r load-results}
 data("sampleresults")
-fitmodel <- sampleresults
 ```
 
 ### Occupancy probabilities

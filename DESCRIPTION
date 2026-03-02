@@ -35,3 +35,8 @@ Suggests:
     loo,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
+LinkingTo: 
+    Rcpp,
+    RcppArmadillo
+Depends: 
+    R (>= 3.5)
