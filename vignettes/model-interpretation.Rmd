@@ -32,7 +32,8 @@ introduction vignette (`vignette("occPlus")`).
 ```{r load}
 library(occPlus)
 data("sampleresults")
-fitmodel <- sampleresults
+data("sampledata")
+sampledata <- data
 ```
 
 ---
