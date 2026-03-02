@@ -73,7 +73,7 @@ The arguments of the function are:
 
 ## Data preparation
 
-The data object is a list of two elements: `info` and `OTU`. 
+The data object is a list of two elements: `info` and `OTU`.
 
 `data$info` is a data.frame with $N$ rows, where $N$ is the total
 number of replicates analyzed and columns:
@@ -84,6 +84,12 @@ number of replicates analyzed and columns:
 
 
 ```{r}
+# The package ships with an illustrative example dataset
+data("sampledata")
+sampledata <- data
+# Inspect the metadata
+head(sampledata$info)
+
 head(data$info)
 ```
 
@@ -213,7 +219,7 @@ plotStage2FPRates(fitmodel, idx_species = 1:20)
 ### Occupancy rates
 
 To compute occupancy probabilities at each site and for each species, we use
-the following function. 
+the following function.
 
 ```{r, eval = T}
 occProbs <- computeOccupancyProbs(fitmodel)
@@ -253,10 +259,10 @@ plotSigElementsCorMatrix(fitmodel)
 
 ---
 
-## Citation
-
 We note that this is the \textit{residual} covariance matrix, \textbf{after}
 accounting for occupancy covariates but accounting for ordination covariates.
+
+## Citation
 
 If you use `occPlus` in published work, please cite:
 
