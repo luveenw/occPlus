@@ -1,3 +1,7 @@
+#' @useDynLib occPlus, .registration = TRUE
+#' @importFrom Rcpp sourceCpp
+NULL
+
 .onLoad <- function(libname, pkgname) {
   # CRAN policy: packages must not set mc.cores > 2 without user consent.
   # We set it to the minimum of 2 and the detected core count.

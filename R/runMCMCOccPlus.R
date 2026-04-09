@@ -50,16 +50,7 @@ runMCMCOccPlus <- function(data,
                                          nburn = 5000,
                                          niter = 5000)){
 
-  {
-    d = 2
-  threshold = 1
-  occCovariates = c()
-  ordCovariates = c("season")
-  detCovariates = c("genetic_predator")
-  MCMCparams = list(nchain = 1,
-                    nburn = 5000,
-                    niter = 5000)
-  }
+
 
   data_info <- as.data.frame(data$info)
   OTU <- data$OTU

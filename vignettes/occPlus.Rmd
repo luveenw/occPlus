@@ -55,10 +55,10 @@ The method is described in full in:
 
 ## Installation
 
-```{r install, eval = FALSE}
+```{r install, eval = TRUE}
 # Install from GitHub (development version)
 # install.packages("remotes")
-remotes::install_github("AlexDiana/occPlus")
+# remotes::install_github("luveenw/occPlus@luveenw_test_plan_3")
 ```
 
 `occPlus` links to [Stan](https://mc-stan.org/) through `rstan`. Make
@@ -174,13 +174,16 @@ Covariates are specified by supplying column names from `data$info`.
 categorical ones into dummy variables.
 
 ```{r fit-covariates, eval = FALSE}
+print(sampledata$OTU)
 fitmodel <- runOccPlus(
   data            = sampledata,
   d               = 2,
-  occCovariates   = c("altitude"),          # predictors of occupancy (ψ)
-  ordCovariates   = c("altitude", "NDVI"),  # predictors of latent factors (U)
-  detCovariates   = c("input_volume")       # predictors of collection probability (θ)
+  occCovariates   = c("X_psi.1"),          # predictors of occupancy (ψ)
+  ordCovariates   = c("X_ord.1", "X_ord.2"),  # predictors of latent factors (U)
+  detCovariates   = c("X_theta")       # predictors of collection probability (θ)
 )
+summary(sampledata$OTU)
+save(fitmodel, file = "../data/sampleresults.rda")
 ```
 
 The names in `occCovariates`, `ordCovariates`, and `detCovariates`
@@ -227,6 +230,8 @@ For the examples below we load the pre-computed results shipped with
 the package:
 
 ```{r load-results}
+# LUVEEN TODO look into generating this on the fly? It should generate
+# in some reasonable amount of time
 data("sampleresults")
 ```
 
@@ -244,7 +249,7 @@ str(occProbs)
 Visualise site-averaged occupancy rates across species:
 
 ```{r plot-occ-rates}
-plotOccupancyRates(fitmodel, idx_species = 1:20)
+plotOccupancyRates(fitmodel, idx_species = 1:10)
 ```
 
 ### Covariate effects
@@ -260,9 +265,9 @@ occCovOutput <- returnOccupancyCovariates(fitmodel)
 str(occCovOutput)
 ```
 
-```{r plot-occ-covs, eval = FALSE}
-# Replace "altitude" with the name of your occupancy covariate
-plotOccupancyCovariates(fitmodel, covName = "altitude", idx_species = 1:20)
+```{r plot-occ-covs, eval = TRUE}
+# Replace "X_psi.1" with the name of your occupancy covariate
+plotOccupancyCovariates(fitmodel, covName = "X_psi.1", idx_species = 1:10)
 ```
 
 #### Ordination (latent factor) covariates
@@ -272,8 +277,8 @@ ordCovOutput <- returnOrdinationCovariatesOutput(fitmodel)
 str(ordCovOutput)
 ```
 
-```{r plot-ord-covs, eval = FALSE}
-plotOrdinationCovariates(fitmodel, covName = "altitude")
+```{r plot-ord-covs, eval = TRUE}
+plotOrdinationCovariates(fitmodel, covName = "X_ord.1")
 ```
 
 #### Detection (collection) covariates
@@ -283,8 +288,8 @@ detCovOutput <- returnDetectionCovariates(fitmodel)
 str(detCovOutput)
 ```
 
-```{r plot-det-covs, eval = FALSE}
-plotDetectionCovariates(fitmodel, covName = "input_volume", idx_species = 1:20)
+```{r plot-det-covs, eval = TRUE}
+plotDetectionCovariates(fitmodel, covName = "X_theta", idx_species = 1:10)
 ```
 
 ### Baseline rates
@@ -293,14 +298,14 @@ plotDetectionCovariates(fitmodel, covName = "input_volume", idx_species = 1:20)
 positive sample, at average covariate values:
 
 ```{r plot-collection}
-plotCollectionRates(fitmodel, idx_species = 1:20)
+plotCollectionRates(fitmodel, idx_species = 1:10)
 ```
 
 **Lab-stage true-positive rate** ($p_{ls}$) — probability that a
 positive replicate produces reads given a positive sample, per primer:
 
 ```{r plot-detection}
-plotDetectionRates(fitmodel, idx_species = 1:20)
+plotDetectionRates(fitmodel, idx_species = 1:10)
 ```
 
 ### False-positive rates
@@ -309,14 +314,14 @@ plotDetectionRates(fitmodel, idx_species = 1:20)
 sample at an *unoccupied* site:
 
 ```{r plot-stage1-fp}
-plotStage1FPRates(fitmodel, idx_species = 1:20)
+plotStage1FPRates(fitmodel, idx_species = 1:10)
 ```
 
 **Lab-stage FP rate** ($q_{ls}$) — false-positive read rate per PCR
 replicate per primer:
 
 ```{r plot-stage2-fp}
-plotStage2FPRates(fitmodel, idx_species = 1:20)
+plotStage2FPRates(fitmodel, idx_species = 1:10)
 ```
 
 ### Read intensity distributions
