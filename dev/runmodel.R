@@ -8,9 +8,18 @@
 
 # LOAD DATA ------
 
-load(here("Stan/Count model","wangdata.rda"))
+# wang
+{
+  load(here("Stan/Count model","wangdata.rda"))
 
-data$OTU[data$info$elution_volume == 0,] <- NA
+  data$OTU[data$info$elution_volume == 0,] <- NA
+
+}
+
+# gailagongshan
+{
+  load("~/occPlus/dev/gailagongshan_occplus.rda")
+}
 
 # fit_ednaplus <- runOccPlusPro(data, d = 1,
 #                               ordCovariates = c("altitude"),
@@ -297,10 +306,10 @@ logy1 <- log(y + 1)
 # MODEL -----
 
 fitmodel  <- runOccPlus(data,
-                        d = 2,
-                        occCovariates = c("X_psi"),
-                        ordCovariates = c(),
-                        detCovariates = c())
+                        d = 10,
+                        occCovariates = c(),
+                        ordCovariates = c("latitude","longitude","tributary"),
+                        detCovariates = c("DayRain","PrevDayRain"))
 
 # OUTPUT USING FUNCTIONS ---------
 

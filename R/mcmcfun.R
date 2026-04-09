@@ -167,6 +167,9 @@ sample_betatheta <- function(w, z, beta_theta, idx_z, X_theta,
     beta_theta[,s] <- sample_beta_nocov_cpp(beta_theta[,s], X_thetasubset,
                                             b_betatheta, B_betatheta, n, k)
 
+    mean((k + .5)[X_thetasubset[,2] == 1])
+    mean((k + .5)[X_thetasubset[,2] == 0])
+
   }
 
   beta_theta
@@ -536,6 +539,29 @@ sample_musigma <- function(sigma1,
 
   list("mu1" = mu1,
        "sigma1" = sigma1)
+}
+
+sample_sigma0 <- function(logy1, c_imk,
+                          a_sigma1, b_sigma1){
+
+  logy1_cimk1 <- logy1[c_imk == 2]
+  n_samples <- length(logy1_cimk1)
+
+  if(n_samples > 0){
+
+    alpha_n <- a_sigma1 + n_samples / 2
+    beta_n <- b_sigma1 + 0.5 * sum((logy1_cimk1)^2)
+
+  } else {
+
+    alpha_n <- a_sigma1
+    beta_n <- b_sigma1
+
+  }
+
+  sigma0 <- sqrt(1 / rgamma(1, shape = alpha_n, rate = beta_n))
+
+  sigma0
 }
 
 sample_mu0sigma0 <- function(y, c_imk,

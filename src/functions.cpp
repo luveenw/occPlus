@@ -611,6 +611,105 @@ NumericMatrix sample_w_cpp(const NumericMatrix& logy1,
 }
 
 // [[Rcpp::export]]
+NumericMatrix sample_w_cim_cipp(const NumericMatrix& y,
+                                const NumericMatrix& theta,
+                                const NumericVector& theta0,
+                                const NumericMatrix& p,
+                                const NumericMatrix& q,
+                                const IntegerVector& M,
+                                const IntegerVector& K,
+                                const IntegerVector& sumL,
+                                const IntegerVector& sumM,
+                                const IntegerVector& sumK,
+                                int maxL,
+                                const NumericMatrix& z) {
+
+  int S = theta.ncol();
+  int N = theta.nrow();
+  int n = M.size();
+
+  NumericMatrix w(N, S);
+
+  // Precompute logs for p and q
+  NumericMatrix log_p(maxL, S), log_1p(maxL, S);
+  NumericMatrix log_q(maxL, S), log_1q(maxL, S);
+
+  for(int s = 0; s < S; s++) {
+    for(int l = 0; l < maxL; l++) {
+      log_p(l, s) = std::log(p(l, s));
+      log_1p(l, s) = std::log(1.0 - p(l, s));
+      log_q(l, s) = std::log(q(l, s));
+      log_1q(l, s) = std::log(1.0 - q(l, s));
+    }
+  }
+
+  for (int s = 0; s < S; s++) {
+    for (int i = 0; i < n; i++) {
+      for (int m = 0; m < M[i]; m++) {
+
+        // compute log p(w = 1)
+        double log_p1 = 0.0;
+        for (int l = 0; l < maxL; l++) {
+          int idxL = sumL[sumM[i] + m] + l;
+          for (int k = 0; k < K[idxL]; k++) {
+            int idxK = sumK[idxL] + k;
+
+            log_p1 += y(idxK, s) * log_p(l, s) + (1 - y(idxK, s)) * log_1p(l, s);
+
+            // if(y(idxK, s) == 0){
+            //   log_p1 += log(1 - p(l,s));
+            // } else {
+            //   log_p1 += log(p(l,s));
+            // }
+          }
+        }
+
+        // compute log p(w = 0)
+        double log_p0 = 0.0;
+        for (int l = 0; l < maxL; l++) {
+          int idxL = sumL[sumM[i] + m] + l;
+          for (int k = 0; k < K[idxL]; k++) {
+            int idxK = sumK[idxL] + k;
+
+            log_p0 += y(idxK, s) * log_q(l,s) + (1 - y(idxK, s)) * log_1q(l,s);
+
+            // if(y(idxK, s) == 0){
+            //   log_p0 += log(1 - q(l,s));
+            // } else {
+            //   log_p0 += log(q(l,s));
+            // }
+          }
+        }
+
+        // conditional on z[i, s]
+        if (z(i, s) == 1.0) {
+          log_p1 += log(theta(sumM[i] + m, s));
+          log_p0 += log(1 - theta(sumM[i] + m, s));;//R::dbinom(0.0, 1.0, theta(sumM[i] + m, s), true);
+          // log_p1 += R::dbinom(1.0, 1.0, theta(sumM[i] + m, s), true);
+          // log_p0 += R::dbinom(0.0, 1.0, theta(sumM[i] + m, s), true);
+        } else {
+          log_p1 += log(theta0[s]);
+            // R::dbinom(1.0, 1.0, theta0[s], true);
+          log_p0 += log(1 - theta0[s]);
+            // R::dbinom(0.0, 1.0, theta0[s], true);
+        }
+
+        // numerical stability
+        double maxlog = std::max(log_p1, log_p0);
+        double p1exp = std::exp(log_p1 - maxlog);
+        double p0exp = std::exp(log_p0 - maxlog);
+        double p_ws1 = p1exp / (p1exp + p0exp);
+
+        // sample w
+        w(sumM[i] + m, s) = R::rbinom(1.0, p_ws1);
+      }
+    }
+  }
+
+  return w;
+}
+
+// [[Rcpp::export]]
 List sample_pq_cpp(NumericMatrix c_imk, NumericMatrix w, IntegerVector primerIdx,
                    IntegerVector idx_k, int maxL, double a_p, double b_p,
                    double a_q, double b_q) {

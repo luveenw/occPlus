@@ -15,7 +15,7 @@
 #' @param d Number of factors.
 #' @param threshold (Optional) threshold used to truncated the reads to binary data.
 #' Data greater than or equal to the threshold will be considered as detection.
-#' If this is set to F (which is the default), occPlus estimates two modes as described
+#' If this is set to 0 (which is the default), occPlus estimates two modes as described
 #' in the paper.
 #' @param occCovariates vector of the name of the covariates for the occupancy probabilities.
 #' Names should match the column name in data$info.
@@ -42,13 +42,13 @@
 #'
 runMCMCOccPlus <- function(data,
                        d,
-                       threshold = F,
+                       threshold = 0,
                        occCovariates = c(),
                        ordCovariates = c(),
                        detCovariates = c(),
-                       MCMCparams = list(nchain = 2,
-                                         nburn = 1000,
-                                         niter = 1000)){
+                       MCMCparams = list(nchain = 1,
+                                         nburn = 2500,
+                                         niter = 2500)){
 
   data_info <- as.data.frame(data$info)
   OTU <- data$OTU
@@ -263,7 +263,7 @@ runMCMCOccPlus <- function(data,
         dplyr::select(-Sample) %>%
         dplyr::mutate_if(is.numeric, scale) %>%
         dplyr::mutate(dplyr::across(dplyr::where(~ !is.numeric(.x)), as.factor)) %>%
-        model.matrix(~., .)
+       model.matrix(~., .)
 
     } else {
 
@@ -297,8 +297,8 @@ runMCMCOccPlus <- function(data,
     b_p <- 1
     a_q <- 1
     b_q <- 20
-    a_sigma0 <- 10
-    b_sigma0 <- 10
+    a_sigma0 <- 1
+    b_sigma0 <- 5
     a_sigma1 <- 1
     b_sigma1 <- 1
 
@@ -317,7 +317,7 @@ runMCMCOccPlus <- function(data,
 
   y <- OTU
 
-  if(threshold != F){
+  if(threshold != 0){
 
     y[OTU >= threshold] <- 1
     y[OTU < threshold] <- 0
@@ -345,6 +345,10 @@ runMCMCOccPlus <- function(data,
     p_output <- array(NA, dim = c(maxL, S, niter, nchain))
     q_output <- array(NA, dim = c(maxL, S, niter, nchain))
     theta0_output <- array(NA, dim = c(S, niter, nchain))
+    mu1_output <- array(NA, dim = c(niter, nchain))
+    sigma1_output <- array(NA, dim = c(niter, nchain))
+    mu0_output <- array(NA, dim = c(niter, nchain))
+    sigma0_output <- array(NA, dim = c(niter, nchain))
   }
 
   for (chain in 1:nchain) {
@@ -362,11 +366,15 @@ runMCMCOccPlus <- function(data,
       p_output_chain <- array(NA, dim = c(maxL, S, niter))
       q_output_chain <- array(NA, dim = c(maxL, S, niter))
       theta0_output_chain <- array(NA, dim = c(S, niter))
+      mu1_output_chain <- rep(NA, niter)
+      sigma1_output_chain <- rep(NA, niter)
+      mu0_output_chain <- rep(NA, niter)
+      sigma0_output_chain <- rep(NA, niter)
     }
 
     # starting values
     {
-      if(!threshold){
+      if(threshold == 0){
 
 
         trueStartingPoint <- F
@@ -420,38 +428,69 @@ runMCMCOccPlus <- function(data,
             }
           }
 
-          beta_psi <- matrix(0, ncov_psi, S)
-          beta_theta <- matrix(0, ncov_theta, S)
-          beta_ord <- matrix(0, ncov_ord, d)
-          E <- matrix(0, n, d)
-          LL <- matrix(1, d, S)
 
-          U <- computeU(X_ord, beta_ord, E)
-          psi <- computePsi(X_psi, beta_psi, U, LL)
-          theta <- computeTheta(X_theta, beta_theta)
-
-          p <- matrix(.9, maxL, S)
-          q <- matrix(.05, maxL, S)
-          theta0 <- rep(.05, S)
 
           mu1 <- 7
           sigma1 <- 3
-          mu0 <- 1
+          mu0 <- 0
           sigma0 <- 1
         }
 
-        U <- computeU(X_ord, beta_ord, E)
-        psi <- computePsi(X_psi, beta_psi, U, LL)
+
+
       } else {
+
+        c_imk <- y > 0
+
+        w <- matrix(NA, N, S)
+
+        for (s in 1:S) {
+          for (i in 1:n) {
+            for (m in 1:M[i]) {
+              idx_im1 <- sumK[sumL[sumM[i] + m] + 1] + 1
+              idx_im2 <- sumK[sumL[sumM[i] + m] + L[sumM[i] + m]] +
+                K[sumL[sumM[i] + m] + L[sumM[i] + m]]
+              w[sumM[i] + m,s] <- as.numeric(any(y[idx_im1:idx_im2,s] > 0))
+            }
+          }
+        }
+
+        z <- matrix(NA, n, S)
+
+        for (s in 1:S) {
+          for (i in 1:n) {
+            idx_i1 <- sumM[i] + 1
+            idx_i2 <- sumM[i] + M[i]
+
+            z[i,s] <- as.numeric(any(w[idx_i1:idx_i2, s] > 0))
+          }
+        }
 
 
       }
-    }
 
+      beta_psi <- matrix(0, ncov_psi, S)
+      beta_theta <- matrix(0, ncov_theta, S)
+      beta_ord <- matrix(0, ncov_ord, d)
+      E <- matrix(0, n, d)
+      LL <- matrix(1, d, S)
+
+
+      theta <- computeTheta(X_theta, beta_theta)
+
+      p <- matrix(.9, maxL, S)
+      q <- matrix(.05, maxL, S)
+      theta0 <- rep(.05, S)
+
+
+      U <- computeU(X_ord, beta_ord, E)
+      psi <- computePsi(X_psi, beta_psi, U, LL)
+
+    }
 
     for (iter in 1:(niter + nburn)) {
 
-      if(iter %% 100 == 0){
+      if(iter %% 10 == 0){
 
         if(iter > nburn){
           print(paste0("Chain ", chain, " - Iteration ",iter - nburn))
@@ -479,8 +518,18 @@ runMCMCOccPlus <- function(data,
       }
 
       # sample w
-      w <- sample_w_cpp(logy1, mu0, sigma0, mu1, sigma1, theta, theta0, p, q,
-                        M, K, sumL, sumM, sumK, maxL, z)
+      if(threshold > 0){
+
+        w <- sample_w_cim_cipp(y, theta, theta0, p, q,
+                               M, K, sumL, sumM, sumK, maxL, z)
+
+      } else {
+
+        w <- sample_w_cpp(logy1, mu0, sigma0, mu1, sigma1, theta, theta0, p, q,
+                          M, K, sumL, sumM, sumK, maxL, z)
+
+
+      }
 
       # sample cimk
 
@@ -511,21 +560,21 @@ runMCMCOccPlus <- function(data,
       # sample theta0
       theta0 <- sample_theta0(z, w, idx_z, a_theta0, b_theta0)
 
-      # sample mu1sigma1
-      list_mu1sigma1 <- sample_musigma(sigma1,
-                                       logy1, c_imk,
-                                       mu_mu1, sd_mu1,
-                                       a_sigma1, b_sigma1, tpfp = T)
-      mu1 <- list_mu1sigma1$mu1
-      sigma1 <- list_mu1sigma1$sigma1
+      if(threshold == 0){
 
-      # sample mu0sigma0
-      list_mu1sigma1 <- sample_musigma(sigma0,
-                                       logy1, c_imk,
-                                       mu_mu0, sd_mu0,
-                                       a_sigma0, b_sigma0, tpfp = F)
-      mu0 <- list_mu1sigma1$mu1
-      sigma0 <- list_mu1sigma1$sigma1
+        # sample mu1sigma1
+
+        list_mu1sigma1 <- sample_musigma(sigma1,
+                                         logy1, c_imk,
+                                         mu_mu1, sd_mu1,
+                                         a_sigma1, b_sigma1, tpfp = T)
+        mu1 <- list_mu1sigma1$mu1
+        sigma1 <- list_mu1sigma1$sigma1
+
+        # sample sigma0
+        sigma0 <- sample_sigma0(logy1, c_imk, a_sigma0, b_sigma0)
+
+      }
 
       {
 
@@ -541,6 +590,14 @@ runMCMCOccPlus <- function(data,
           q_output_chain[,,currentIter] <- q
           theta0_output_chain[,currentIter] <- theta0
           z_output_chain[,,currentIter] <- z
+
+          if(threshold == 0){
+            mu1_output_chain[currentIter] <- mu1
+            sigma1_output_chain[currentIter] <- sigma1
+            mu0_output_chain[currentIter] <- mu0
+            sigma0_output_chain[currentIter] <- sigma0
+          }
+
         }
 
       }
@@ -555,6 +612,10 @@ runMCMCOccPlus <- function(data,
       q_output[,,,chain] <- q_output_chain
       theta0_output[,,chain] <- theta0_output_chain
       z_output[,,,chain] <- z_output_chain
+      mu1_output[,chain] <- mu1_output_chain
+      sigma1_output[,chain] <- sigma1_output_chain
+      mu0_output[,chain] <- mu0_output_chain
+      sigma0_output[,chain] <- sigma0_output_chain
 
     }
 
@@ -571,7 +632,12 @@ runMCMCOccPlus <- function(data,
     "z_output" = z_output,
     "p_output" = p_output,
     "q_output" = q_output,
-    "theta0_output" = theta0_output)
+    "theta0_output" = theta0_output,
+    "mu1_output" = mu1_output,
+    "sigma1_output" = sigma1_output,
+    "mu0_output" = mu0_output,
+    "sigma0_output" = sigma0_output
+    )
 
   infos <- list(
     "S" = S,

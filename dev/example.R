@@ -76,3 +76,6 @@ plotFPDetectionRates(fitmodel,
                      idx_species = 1:5)
 
 plotReadIntensity(fitmodel)
+
+plotDetectionCovariates(fitmodel,
+                        covName = "typeW")

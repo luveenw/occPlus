@@ -185,7 +185,7 @@ returnOrdinationCovariatesOutput <- function(fitModel){
     beta_ord_output0 <- fitModel$results_output$beta_ord_output
     U_output0 <- fitModel$results_output$U_output
 
-    niter <- nrow(L_output0)
+    niter <- dim(L_output0)[3]
 
     L_output0 <- apply(L_output0, c(1,2), c)
     L_output0 <- aperm(L_output0, c(1,3,2))
@@ -202,8 +202,6 @@ returnOrdinationCovariatesOutput <- function(fitModel){
     for(iter in 1:niter){
       beta_ord_output[iter,,] <- matrix(beta_ord_output0[iter,,], ncov_ord, d, byrow = F)
     }
-
-    niter <- nrow(L_output)
 
     L_output_reparam <- L_output
     U_output_reparam <- U_output0
@@ -448,7 +446,7 @@ plotOrdinationCovariates <- function(fitmodel,
 #'
 returnDetectionCovariates <- function(fitmodel){
 
-  matrix_of_draws <- fitmodel$matrix_of_draws
+  matrix_of_draws <- fitmodel$results_output
 
   S <- fitmodel$infos$S
   ncov_theta <- fitmodel$infos$ncov_theta
@@ -459,18 +457,10 @@ returnDetectionCovariates <- function(fitmodel){
   # samples_subset <- matrix_of_draws[,grepl(param, colnames(matrix_of_draws))]
   # samples_subset <- samples_subset[,idxcov + 0:(S - 1)*ncov_psi]
 
-  beta_theta_output0 <-
-    matrix_of_draws[,grepl("beta_theta\\[", colnames(matrix_of_draws))]
+  beta_theta_output <- matrix_of_draws$beta_theta_output
 
-  niter <- nrow(beta_theta_output0)
-
-  beta_theta_output <- array(NA, dim = c(niter, ncov_theta, S))
-  for(iter in 1:niter){
-    beta_theta_output[iter,,] <- matrix(beta_theta_output0[iter,], ncov_theta, S, byrow = F)
-  }
-
-  dimnames(beta_theta_output)[[2]] <- detCovNames
-  dimnames(beta_theta_output)[[3]] <- speciesNames
+  dimnames(beta_theta_output)[[1]] <- detCovNames
+  dimnames(beta_theta_output)[[2]] <- speciesNames
 
   beta_theta_output
 
@@ -965,7 +955,7 @@ plotFPTPStage2Rates <- function(fitmodel,
 #' @import ggplot2
 #'
 plotDetectionRates <- function(fitmodel,
-                               idx_species = NULL){ft
+                               idx_species = NULL){
 
   matrix_of_draws <- fitmodel$matrix_of_draws
 
@@ -978,11 +968,9 @@ plotDetectionRates <- function(fitmodel,
     idx_species <- 1:S
   }
 
-  param <- "p\\["
+  p_output <- fitmodel$results_output$p_output
 
-  samples_subset <- matrix_of_draws[,grepl(param, colnames(matrix_of_draws))]
-
-  data_plot <- apply(samples_subset, 2, function(x) {
+  data_plot <- apply(p_output, c(1,2), function(x) {
     quantile(x, probs = c(0.025, 0.975))
   }) %>%
     t %>%
@@ -1202,14 +1190,10 @@ plotStage2FPRates <- function(fitmodel,
 #'
 plotReadIntensity <- function(fitmodel){
 
-  matrix_of_draws <- fitmodel$matrix_of_draws
-
-  mu1_output <-
-    matrix_of_draws[,grepl("mu1", colnames(matrix_of_draws))]
-  sigma0_output <-
-    matrix_of_draws[,grepl("sigma0", colnames(matrix_of_draws))]
-  sigma1_output <-
-    matrix_of_draws[,grepl("sigma1", colnames(matrix_of_draws))]
+  mu1_output <- fitmodel$results_output$mu1_output
+  mu0_output <- fitmodel$results_output$mu0_output
+  sigma1_output <- fitmodel$results_output$sigma1_output
+  sigma0_output <- fitmodel$results_output$sigma0_output
 
   niter <- length(mu1_output)
 
@@ -1224,12 +1208,14 @@ plotReadIntensity <- function(fitmodel){
   densities_plot_neg <- matrix(NA, length(x_grid), niter)
 
   for (iter in 1:niter) {
+
     mu1 <- mu1_output[iter]
+    mu0 <- mu0_output[iter]
     sigma1 <- sigma1_output[iter]
     sigma0 <- sigma0_output[iter]
 
     densities_plot_pos[,iter] <- dnorm(x, mean = mu1, sd = sigma1)
-    densities_plot_neg[,iter] <- dnorm(x, mean = 0, sd = sigma0)
+    densities_plot_neg[,iter] <- dnorm(x, mean = mu0, sd = sigma0)
   }
 
   densities_plot_pos_quantiles <-
@@ -1336,10 +1322,9 @@ generateCorrelationMatrixOutput <- function(fitModel,
     idx_species <- 1:S
   }
 
-  niter <- nrow(L_output)
+  niter <- dim(L_output)[3]
 
   L_output <- apply(L_output, c(1,2), c)
-  L_output <- aperm(L_output, c(1,3,2))
 
   beta_psi_output <- apply(beta_psi_output, c(1,2), c)
 
