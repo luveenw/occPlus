@@ -11,3 +11,7 @@ Thumbs.db
 .Rproj.user
 .httr-oauth
 .quarto
+IGNOREME*.r
+IGNOREME*.rmd
+vignettes/IGNOREME*.rmd
+vignettes/IGNOREME*.r
