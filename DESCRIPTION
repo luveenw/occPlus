@@ -7,6 +7,11 @@ Authors@R: c(
       "Alex", "Diana",
       email = "ad23269@essex.ac.uk",
       role = c("aut", "cre")
+    ),
+    person(
+      "Luveen", "Wadhwani",
+      email = "luveen.w@columbia.edu",
+      role = c("aut")
     )
   )
 Description: More about what it does (maybe more than one line).

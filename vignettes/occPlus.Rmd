@@ -174,13 +174,16 @@ Covariates are specified by supplying column names from `data$info`.
 categorical ones into dummy variables.
 
 ```{r fit-covariates, eval = FALSE}
+print(sampledata$OTU)
 fitmodel <- runOccPlus(
   data            = sampledata,
   d               = 2,
-  occCovariates   = c("altitude"),          # predictors of occupancy (ψ)
-  ordCovariates   = c("altitude", "NDVI"),  # predictors of latent factors (U)
-  detCovariates   = c("input_volume")       # predictors of collection probability (θ)
+  occCovariates   = c("X_psi.1"),          # predictors of occupancy (ψ)
+  ordCovariates   = c("X_ord.1", "X_ord.2"),  # predictors of latent factors (U)
+  detCovariates   = c("X_theta")       # predictors of collection probability (θ)
 )
+summary(sampledata$OTU)
+save(fitmodel, "data/luveen_test_sampleresults.rda")
 ```
 
 The names in `occCovariates`, `ordCovariates`, and `detCovariates`
@@ -227,6 +230,8 @@ For the examples below we load the pre-computed results shipped with
 the package:
 
 ```{r load-results}
+# LUVEEN TODO look into generating this on the fly? It should generate
+# in some reasonable amount of time
 data("sampleresults")
 ```
 
