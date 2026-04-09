@@ -55,7 +55,7 @@ The method is described in full in:
 
 ## Installation
 
-```{r install, eval = FALSE}
+```{r install, eval = TRUE}
 # Install from GitHub (development version)
 # install.packages("remotes")
 remotes::install_github("AlexDiana/occPlus")
@@ -160,7 +160,7 @@ Key checks before fitting:
 
 ### Minimal call
 
-```{r fit-minimal, eval = FALSE}
+```{r fit-minimal, eval = TRUE}
 fitmodel <- runOccPlus(
   data = sampledata,
   d    = 2        # number of latent factors
@@ -173,7 +173,7 @@ Covariates are specified by supplying column names from `data$info`.
 `occPlus` automatically scales continuous predictors and expands
 categorical ones into dummy variables.
 
-```{r fit-covariates, eval = FALSE}
+```{r fit-covariates, eval = TRUE}
 print(sampledata$OTU)
 fitmodel <- runOccPlus(
   data            = sampledata,
@@ -195,7 +195,7 @@ To binarise read data before fitting (threshold-based occupancy
 modelling), supply a numeric cutoff. Any replicate with reads
 $\geq$ `threshold` is treated as a detection.
 
-```{r fit-binary, eval = FALSE}
+```{r fit-binary, eval = TRUE}
 fitmodel_bin <- runOccPlus(
   data      = sampledata,
   d         = 2,
@@ -265,7 +265,7 @@ occCovOutput <- returnOccupancyCovariates(fitmodel)
 str(occCovOutput)
 ```
 
-```{r plot-occ-covs, eval = FALSE}
+```{r plot-occ-covs, eval = TRUE}
 # Replace "altitude" with the name of your occupancy covariate
 plotOccupancyCovariates(fitmodel, covName = "altitude", idx_species = 1:20)
 ```
@@ -277,7 +277,7 @@ ordCovOutput <- returnOrdinationCovariatesOutput(fitmodel)
 str(ordCovOutput)
 ```
 
-```{r plot-ord-covs, eval = FALSE}
+```{r plot-ord-covs, eval = TRUE}
 plotOrdinationCovariates(fitmodel, covName = "altitude")
 ```
 
@@ -288,7 +288,7 @@ detCovOutput <- returnDetectionCovariates(fitmodel)
 str(detCovOutput)
 ```
 
-```{r plot-det-covs, eval = FALSE}
+```{r plot-det-covs, eval = TRUE}
 plotDetectionCovariates(fitmodel, covName = "input_volume", idx_species = 1:20)
 ```
 
@@ -370,7 +370,7 @@ hyperparameter. Use leave-one-out cross-validation via the
 [`loo`](https://CRAN.R-project.org/package=loo) package to compare
 candidate models.
 
-```{r model-selection, eval = FALSE}
+```{r model-selection, eval = TRUE}
 library(loo)
 
 fitmodel_d0 <- runOccPlus(sampledata, d = 0)  # standard multi-species model
