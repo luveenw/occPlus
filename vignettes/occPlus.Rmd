@@ -84,12 +84,6 @@ number of replicates analyzed and columns:
 
 
 ```{r}
-# The package ships with an illustrative example dataset
-data("sampledata")
-sampledata <- data
-# Inspect the metadata
-head(sampledata$info)
-
 head(data$info)
 ```
 
@@ -108,9 +102,9 @@ Next, we can run the model by typing
 ```{r, eval = FALSE}
 fitmodel  <- runOccPlus(data,
                         d = 2,
-                        occCovariates = c("X_psi.1","X_psi.2"),
-                        ordCovariates = c("X_ord.1","X_ord.2"),
-                        collCovariates = c("X_theta"))
+                        occCovariates = c("X_psi.1","X_psi.2"),  # predictors of occupancy (ψ)
+                        ordCovariates = c("X_ord.1","X_ord.2"),  # predictors of latent factors (U)
+                        collCovariates = c("X_theta"))           # predictors of collection probability (θ)
 
 ```
 
@@ -257,10 +251,10 @@ red and negative in blue)
 plotSigElementsCorMatrix(fitmodel)
 ```
 
----
-
 We note that this is the \textit{residual} covariance matrix, \textbf{after}
 accounting for occupancy covariates but accounting for ordination covariates.
+
+---
 
 ## Citation
 
