@@ -16,3 +16,7 @@ IGNOREME*.rmd
 vignettes/IGNOREME*.rmd
 vignettes/IGNOREME*.r
 .idea/
+src/*.o
+src/*.so
+src/*.dll
+src/*.dylib
