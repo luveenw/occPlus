@@ -311,9 +311,10 @@ double log_L_gamma_cpp(arma::vec gamma, arma::mat X, arma::vec indexes_covariate
 }
 
 int sample_int(IntegerVector samples) {
-  // Rcpp::IntegerVector pool = Rcpp::seq(1, 10);
-  std::random_shuffle(samples.begin(), samples.end());
-  return samples[0];
+  int n = samples.size();
+  int idx = (int)std::floor(R::runif(0.0, (double)n));
+  if (idx >= n) idx = n - 1;
+  return samples[idx];
 }
 
 arma::vec sample_gamma_cpp(arma::vec gamma, arma::mat X, arma::vec Omega,
@@ -373,7 +374,7 @@ arma::vec sample_gamma_cpp(arma::vec gamma, arma::mat X, arma::vec Omega,
 
   } else { // swap
 
-    if((sum(gamma) - fixedIndexes) != 0 & (sum(gamma) - fixedIndexes) != ncov){
+    if((sum(gamma) - fixedIndexes) != 0 && (sum(gamma) - fixedIndexes) != ncov){
 
       // Find zero covariates
       int numOfZeroCov = ncov - (sum(gamma) - fixedIndexes);
@@ -734,11 +735,11 @@ List sample_pq_cpp(NumericMatrix c_imk, NumericMatrix w, IntegerVector primerIdx
 
         int idx_ki = idx_k[i] - 1;
 
-        if(primerIdx[i] == (l+1) & w(idx_ki, s) == 1 & c_imk(i,s) == 1){
+        if(primerIdx[i] == (l+1) && w(idx_ki, s) == 1 && c_imk(i,s) == 1){
           w1_primerl_cases_1 += 1;
-        } else if(primerIdx[i] == (l+1) & w(idx_ki, s) == 1 & c_imk(i,s) == 0){
+        } else if(primerIdx[i] == (l+1) && w(idx_ki, s) == 1 && c_imk(i,s) == 0){
           w1_primerl_cases_0 += 1;
-        } else if(primerIdx[i] == (l+1) & w(idx_ki, s) == 0 & c_imk(i,s) == 2){
+        } else if(primerIdx[i] == (l+1) && w(idx_ki, s) == 0 && c_imk(i,s) == 2){
           w0_primerl_cases_1 += 1;
         } else {
           w0_primerl_cases_0 += 1;
