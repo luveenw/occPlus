@@ -1,10 +1,10 @@
 # Install dependencies - this is already taken care of by the DESCRIPTION file, but you can run this to make sure everything is installed
-# install.packages(c("fansi", "downlit", "pkgdown", "devtools", "roxygen2", "usethis"))
+install.packages(c("fansi", "downlit", "pkgdown", "devtools", "roxygen2", "usethis"))
 # pak::pak(c("fansi", "downlit", "pkgdown", "devtools", "roxygen2", "usethis"))
 
 # One-time calls to add Rcpp and Armadillo as dependencies for C++ compilation
-# usethis::use_package("Rcpp", type = "LinkingTo")
-# usethis::use_package("RcppArmadillo", type = "LinkingTo")
+usethis::use_package("Rcpp", type = "LinkingTo")
+usethis::use_package("RcppArmadillo", type = "LinkingTo")
 
 # one-time call to check documentation
 # devtools::check(args = c("--as-cran"))
