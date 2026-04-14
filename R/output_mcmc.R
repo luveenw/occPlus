@@ -22,7 +22,7 @@ logistic <- function(x) 1 / (1 + exp(-x))
 #'
 returnOccupancyCovariates <- function(fitmodel){
 
-  matrix_of_draws <- fitmodel$matrix_of_draws
+  # matrix_of_draws <- fitmodel$matrix_of_draws
 
   S <- fitmodel$infos$S
   ncov_psi <- fitmodel$infos$ncov_psi
@@ -33,20 +33,20 @@ returnOccupancyCovariates <- function(fitmodel){
   # samples_subset <- matrix_of_draws[,grepl(param, colnames(matrix_of_draws))]
   # samples_subset <- samples_subset[,idxcov + 0:(S - 1)*ncov_psi]
 
-  beta_psi_output0 <-
-    matrix_of_draws[,grepl("beta_psi\\[", colnames(matrix_of_draws))]
+  beta_psi_output0 <- fitmodel$results_output$beta_psi_output
+  beta_psi_output0 <- apply(beta_psi_output0, c(1,2), c)
 
-  niter <- nrow(beta_psi_output0)
+  niter <- dim(beta_psi_output0)[1]
 
-  beta_psi_output <- array(NA, dim = c(niter, ncov_psi, S))
-  for(iter in 1:niter){
-    beta_psi_output[iter,,] <- matrix(beta_psi_output0[iter,], ncov_psi, S, byrow = F)
-  }
+  # beta_psi_output <- array(NA, dim = c(niter, ncov_psi, S))
+  # for(iter in 1:niter){
+  #   beta_psi_output[iter,,] <- matrix(beta_psi_output0[iter,], ncov_psi, S, byrow = F)
+  # }
 
-  dimnames(beta_psi_output)[[2]] <- occCovNames
-  dimnames(beta_psi_output)[[3]] <- speciesNames
+  dimnames(beta_psi_output0)[[2]] <- occCovNames
+  dimnames(beta_psi_output0)[[3]] <- speciesNames
 
-  beta_psi_output
+  beta_psi_output0
 
 }
 

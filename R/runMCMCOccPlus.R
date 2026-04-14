@@ -47,8 +47,8 @@ runMCMCOccPlus <- function(data,
                        ordCovariates = c(),
                        detCovariates = c(),
                        MCMCparams = list(nchain = 1,
-                                         nburn = 2500,
-                                         niter = 2500)){
+                                         nburn = 1000,
+                                         niter = 1000)){
 
   data_info <- as.data.frame(data$info)
   OTU <- data$OTU
@@ -88,7 +88,7 @@ runMCMCOccPlus <- function(data,
 
     siteNames <- unique(data_info$Site)
 
-    data_info_sample <- as.numeric(as.factor(data_info$Sample))
+    data_info_sample <- as.numeric(factor(data_info$Sample, levels = unique(data_info$Sample)))
 
   }
 
@@ -376,7 +376,6 @@ runMCMCOccPlus <- function(data,
     {
       if(threshold == 0){
 
-
         trueStartingPoint <- F
 
         # true starting points
@@ -533,11 +532,12 @@ runMCMCOccPlus <- function(data,
 
       # sample cimk
 
-      {
+      if (threshold > 0) {
         w_all <- w[idx_k,,drop=F]
 
-        c_imk <- ifelse(w_all == 1 & logy1 > 0, 1,
-                        ifelse(w_all == 0 & logy1 > 0, 2, 0))
+        c_imk <- ifelse(w_all == 1,
+                        ifelse(logy1 > 0, 1, 0),
+                        ifelse(logy1 > 0, 2, 0))
 
         # c_imk <- sample_cimk(logy1, mu1, sigma1, pi0, sigma0,
         # p, q, idx_k, primerIdx)
