@@ -46,9 +46,9 @@ runMCMCOccPlus <- function(data,
                        occCovariates = c(),
                        ordCovariates = c(),
                        detCovariates = c(),
-                       MCMCparams = list(nchain = 1,
-                                         nburn = 1000,
-                                         niter = 1000)){
+                       MCMCparams = list(nchain = 2,
+                                         nburn = 5000,
+                                         niter = 5000)){
 
   data_info <- as.data.frame(data$info)
   OTU <- data$OTU
