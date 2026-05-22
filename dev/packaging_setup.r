@@ -34,6 +34,8 @@ usethis::use_package("RcppArmadillo", type = "LinkingTo")
 # out the line above this:
 devtools::install(build_vignettes = FALSE)
 
+devtools::build(vignettes = FALSE)
+
 # (WIP) Build binary package
 #
 # NOTE: THIS GENERATES A PLATFORM-SPECIFIC PACKAGE. PACKAGE FILES
