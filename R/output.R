@@ -115,7 +115,7 @@ plotOccupancyCovariates <- function(fitmodel,
   orderSpecies <- order(data_plot$`2.5%`)
 
   plot_occcovs <- data_plot %>%
-    ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
+    ggplot(aes(x =  factor(Species, levels = speciesNames[orderSpecies]),
                ymin = `2.5%`,
                ymax = `97.5%`)) + geom_errorbar() +
     xlab("Species") +
@@ -142,8 +142,6 @@ plotOccupancyCovariates <- function(fitmodel,
 #' Returns the 95% credible interval of the ordination covariates coefficients
 #'
 #' @param fitmodel Output from the function runOccPlus
-#' @param covName Name of the covariate to be plotted (same name as in data$info)
-#' @param idx_species Indexes of the species to be plotted (leave out to plot all the species).
 #'
 #' @return A ggplot object
 #'
@@ -266,7 +264,7 @@ returnOrdinationCovariatesOutput <- function(fitmodel){
 #'
 #' @param fitmodel Output from the function runOccPlus
 #' @param covName Name of the covariate to be plotted (same name as in data$info)
-#' @param idx_species Indexes of the species to be plotted (leave out to plot all the species).
+#' @param idx_factors Indexes of the factors to be plotted (leave out to plot all the factors).
 #'
 #' @return A ggplot object
 #'
@@ -487,7 +485,7 @@ returnDetectionCovariates <- function(fitmodel){
   # orderSpecies <- order(data_plot$`2.5%`)
   #
   # plot_occcovs <- data_plot %>%
-  #   ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
+  #   ggplot(aes(x =  factor(Species, levels = speciesNames[orderSpecies]),
   #              ymin = `2.5%`,
   #              ymax = `97.5%`)) + geom_errorbar() +
   #   xlab("Species") +
@@ -566,7 +564,7 @@ plotDetectionCovariates <- function(fitmodel,
   orderSpecies <- order(data_plot$`2.5%`)
 
   plot_occcovs <- data_plot %>%
-    ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
+    ggplot(aes(x =  factor(Species, levels = speciesNames[orderSpecies]),
                ymin = `2.5%`,
                ymax = `97.5%`)) + geom_errorbar() +
     xlab("Species") +
@@ -591,7 +589,7 @@ plotSpeciesRates <- function(data_plot,
 
   data_plot %>%
     filter(Species %in% speciesNames[orderSpecies[subset]]) %>%
-    ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
+    ggplot(aes(x =  factor(Species, levels = speciesNames[orderSpecies]),
                ymin = `2.5%`,
                ymax = `97.5%`)) + geom_errorbar() +
     xlab("Species") +
@@ -621,7 +619,6 @@ plotSpeciesRates <- function(data_plot,
 #' Returns the 95% credible interval of the baseline occupancy rates
 #'
 #' @param fitmodel Output from the function runOccPlus
-#' @param idx_species Indexes of the species to be plotted (leave out to plot all the species).
 #'
 #' @return The credible interval plot
 #'
@@ -742,7 +739,7 @@ plotOccupancyRates <- function(fitmodel,
 
 
   plot_occupancyrates <- data_plot %>%
-    ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
+    ggplot(aes(x =  factor(Species, levels = speciesNames[orderSpecies]),
                ymin = `2.5%`,
                ymax = `97.5%`)) + geom_errorbar() +
     xlab("Species") +
@@ -817,7 +814,7 @@ plotCollectionRates <- function(fitmodel,
   orderSpecies <- order(data_plot$`2.5%`)
 
   plot_collectionrates <- data_plot %>%
-    ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
+    ggplot(aes(x =  factor(Species, levels = speciesNames[orderSpecies]),
                ymin = `2.5%`,
                ymax = `97.5%`)) + geom_errorbar() +
     xlab("Species") +
@@ -845,6 +842,7 @@ plotCollectionRates <- function(fitmodel,
 #'
 #' @param fitmodel Output from the function runOccPlus
 #' @param idx_species Indexes of the species to be plotted (leave out to plot all the species).
+#' @param primerName Name of the primer to plot.
 #'
 #' @return A ggplot object
 #'
@@ -912,14 +910,14 @@ plotFPTPStage2Rates <- function(fitmodel,
 
   detectionRates <- data_plot %>%
     ggplot()  +
-    geom_errorbar(aes(x = factor(Species, level = speciesNames[speciesOrder]),
-                      # factor(Species, level = speciesNames[orderSpecies]),
+    geom_errorbar(aes(x = factor(Species, levels = speciesNames[speciesOrder]),
+                      # factor(Species, levels = speciesNames[orderSpecies]),
                       ymin = p1,
                       ymax = p2,
                       color = "TP rate"), position = position_dodge(width = .15), # Use the SAME width as geom_col
                   width = .5) +
-    geom_errorbar(aes(x = factor(Species, level = speciesNames[speciesOrder]),
-                      # factor(Species, level = speciesNames[orderSpecies]),
+    geom_errorbar(aes(x = factor(Species, levels = speciesNames[speciesOrder]),
+                      # factor(Species, levels = speciesNames[orderSpecies]),
                       ymin = q1,
                       ymax = q2,
                       color = "FP rate"), position = position_dodge(width = .15), # Use the SAME width as geom_col
@@ -1007,8 +1005,8 @@ plotDetectionRates <- function(fitmodel,
 
   detectionRates <- data_plot %>%
     ggplot(aes(x =
-                 factor(Species, level = speciesNames),
-                 # factor(Species, level = speciesNames[orderSpecies]),
+                 factor(Species, levels = speciesNames),
+                 # factor(Species, levels = speciesNames[orderSpecies]),
                ymin = `2.5%`,
                ymax = `97.5%`,
                color = factor(Primer),
@@ -1086,7 +1084,7 @@ plotStage1FPRates <- function(fitmodel,
   orderSpecies <- order(data_plot$`2.5%`)
 
   detectionRates <- data_plot %>%
-    ggplot(aes(x =  factor(Species, level = speciesNames[orderSpecies]),
+    ggplot(aes(x =  factor(Species, levels = speciesNames[orderSpecies]),
                ymin = `2.5%`,
                ymax = `97.5%`)) +
     geom_errorbar() +
@@ -1169,8 +1167,8 @@ plotStage2FPRates <- function(fitmodel,
 
   detectionRates <- data_plot %>%
     ggplot(aes(x =
-                 # factor(Species, level = speciesNames[orderSpecies]),
-                 factor(Species, level = speciesNames),
+                 # factor(Species, levels = speciesNames[orderSpecies]),
+                 factor(Species, levels = speciesNames),
                ymin = `2.5%`,
                ymax = `97.5%`,
                color = factor(Primer))) +
@@ -1383,6 +1381,7 @@ generateCorrelationMatrixOutput <- function(fitmodel,
 #' Plots the 95% credible interval of density of true positives and false positives
 #'
 #' @param fitmodel Output from the function runOccPlus
+#' @param idx_species Indexes of the species to be plotted (leave out to plot all the species).
 #'
 #' @return A ggplot object
 #'
@@ -1422,6 +1421,7 @@ plotCorrelationMatrix <- function(fitmodel,
 #' Plots the 95% credible interval of density of true positives and false positives
 #'
 #' @param fitmodel Output from the function runOccPlus
+#' @param idx_species Indexes of the species to be plotted (leave out to plot all the species).
 #'
 #' @return A ggplot object
 #'

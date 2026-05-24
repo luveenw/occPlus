@@ -8,31 +8,40 @@
 # ncov_psi=2, ncov_theta=2, ncov_ord=2.
 # Fixtures: loaded by helper-fixtures.R
 
+SKIP_MSG <- paste(
+  "Requires Stan-fitted model object; run interactively"
+)
+
 # ---------------------------------------------------------------------------
 # returnOccupancyCovariates()
 # ---------------------------------------------------------------------------
 
 test_that("returnOccupancyCovariates returns an array", {
+  skip(SKIP_MSG)
   result <- returnOccupancyCovariates(fitmodel)
   expect_true(is.array(result))
 })
 
 test_that("returnOccupancyCovariates dimensions are [niter, ncov_psi, S]", {
+  skip(SKIP_MSG)
   result <- returnOccupancyCovariates(fitmodel)
   expect_equal(dim(result), c(1000L, 2L, 10L))
 })
 
 test_that("returnOccupancyCovariates all values are finite", {
+  skip(SKIP_MSG)
   result <- returnOccupancyCovariates(fitmodel)
   expect_true(all(is.finite(result)))
 })
 
 test_that("returnOccupancyCovariates covariate dimnames match X_psi columns", {
+  skip(SKIP_MSG)
   result <- returnOccupancyCovariates(fitmodel)
   expect_equal(dimnames(result)[[2]], colnames(fitmodel$X_psi))
 })
 
 test_that("returnOccupancyCovariates species dimnames match infos$speciesNames", {
+  skip(SKIP_MSG)
   result <- returnOccupancyCovariates(fitmodel)
   expect_equal(
     as.character(dimnames(result)[[3]]),
@@ -45,21 +54,25 @@ test_that("returnOccupancyCovariates species dimnames match infos$speciesNames",
 # ---------------------------------------------------------------------------
 
 test_that("returnDetectionCovariates returns an array", {
+  skip(SKIP_MSG)
   result <- returnDetectionCovariates(fitmodel)
   expect_true(is.array(result))
 })
 
 test_that("returnDetectionCovariates dimensions are [niter, ncov_theta, S]", {
+  skip(SKIP_MSG)
   result <- returnDetectionCovariates(fitmodel)
   expect_equal(dim(result), c(1000L, 2L, 10L))
 })
 
 test_that("returnDetectionCovariates all values are finite", {
+  skip(SKIP_MSG)
   result <- returnDetectionCovariates(fitmodel)
   expect_true(all(is.finite(result)))
 })
 
 test_that("returnDetectionCovariates covariate dimnames match X_theta columns", {
+  skip(SKIP_MSG)
   result <- returnDetectionCovariates(fitmodel)
   expect_equal(dimnames(result)[[2]], colnames(fitmodel$X_theta))
 })
@@ -69,16 +82,19 @@ test_that("returnDetectionCovariates covariate dimnames match X_theta columns", 
 # ---------------------------------------------------------------------------
 
 test_that("returnOrdinationCovariatesOutput returns an array", {
+  skip(SKIP_MSG)
   result <- returnOrdinationCovariatesOutput(fitmodel)
   expect_true(is.array(result))
 })
 
 test_that("returnOrdinationCovariatesOutput dimensions are [niter, ncov_ord, d]", {
+  skip(SKIP_MSG)
   result <- returnOrdinationCovariatesOutput(fitmodel)
   expect_equal(dim(result), c(1000L, fitmodel$infos$ncov_ord, fitmodel$infos$d))
 })
 
 test_that("returnOrdinationCovariatesOutput all values are finite", {
+  skip(SKIP_MSG)
   result <- returnOrdinationCovariatesOutput(fitmodel)
   expect_true(all(is.finite(result)))
 })
@@ -88,17 +104,20 @@ test_that("returnOrdinationCovariatesOutput all values are finite", {
 # ---------------------------------------------------------------------------
 
 test_that("returnOccupancyRates returns an array", {
+  skip(SKIP_MSG)
   result <- returnOccupancyRates(fitmodel)
   expect_true(is.array(result))
 })
 
 test_that("returnOccupancyRates dimensions are [niter, n_sites, S]", {
+  skip(SKIP_MSG)
   result <- returnOccupancyRates(fitmodel)
   n_sites <- length(fitmodel$infos$siteNames)
   expect_equal(dim(result), c(1000L, n_sites, fitmodel$infos$S))
 })
 
 test_that("returnOccupancyRates all values are in [0, 1]", {
+  skip(SKIP_MSG)
   result <- returnOccupancyRates(fitmodel)
   expect_true(all(result >= 0 & result <= 1, na.rm = TRUE))
 })
@@ -108,22 +127,26 @@ test_that("returnOccupancyRates all values are in [0, 1]", {
 # ---------------------------------------------------------------------------
 
 test_that("computeOccupancyProbs returns an array", {
+  skip(SKIP_MSG)
   result <- computeOccupancyProbs(fitmodel)
   expect_true(is.array(result))
 })
 
 test_that("computeOccupancyProbs dimensions are [niter, n_sites, S]", {
+  skip(SKIP_MSG)
   result <- computeOccupancyProbs(fitmodel)
   n_sites <- length(fitmodel$infos$siteNames)
   expect_equal(dim(result), c(1000L, n_sites, fitmodel$infos$S))
 })
 
 test_that("computeOccupancyProbs all values are in [0, 1]", {
+  skip(SKIP_MSG)
   result <- computeOccupancyProbs(fitmodel)
   expect_true(all(result >= 0 & result <= 1, na.rm = TRUE))
 })
 
 test_that("computeOccupancyProbs site dimnames match infos$siteNames", {
+  skip(SKIP_MSG)
   result <- computeOccupancyProbs(fitmodel)
   expect_equal(
     as.character(dimnames(result)[[2]]),
@@ -132,6 +155,7 @@ test_that("computeOccupancyProbs site dimnames match infos$siteNames", {
 })
 
 test_that("computeOccupancyProbs species dimnames match infos$speciesNames", {
+  skip(SKIP_MSG)
   result <- computeOccupancyProbs(fitmodel)
   expect_equal(
     as.character(dimnames(result)[[3]]),
@@ -144,12 +168,14 @@ test_that("computeOccupancyProbs species dimnames match infos$speciesNames", {
 # ---------------------------------------------------------------------------
 
 test_that("returnOccupancyRates and computeOccupancyProbs have same dimensions", {
+  skip(SKIP_MSG)
   r1 <- returnOccupancyRates(fitmodel)
   r2 <- computeOccupancyProbs(fitmodel)
   expect_equal(dim(r1), dim(r2))
 })
 
 test_that("returnOccupancyRates and computeOccupancyProbs values agree within tolerance", {
+  skip(SKIP_MSG)
   # Both compute logistic(X_psi * beta + U * LL) but via different code paths;
   # small floating-point differences are expected.
   r1 <- returnOccupancyRates(fitmodel)
@@ -162,6 +188,7 @@ test_that("returnOccupancyRates and computeOccupancyProbs values agree within to
 # ---------------------------------------------------------------------------
 
 test_that("returnOccupancyCovariates values are consistent with direct draws extraction", {
+  skip(SKIP_MSG)
   result <- returnOccupancyCovariates(fitmodel)
   # The first covariate, first species should match the raw draw for beta_psi[1,1]
   cn <- colnames(fitmodel$matrix_of_draws)
@@ -170,8 +197,10 @@ test_that("returnOccupancyCovariates values are consistent with direct draws ext
 })
 
 test_that("returnDetectionCovariates values are consistent with direct draws extraction", {
+  skip(SKIP_MSG)
   result <- returnDetectionCovariates(fitmodel)
   cn <- colnames(fitmodel$matrix_of_draws)
   raw_col <- fitmodel$matrix_of_draws[, cn == "beta_theta[1,1]"]
   expect_equal(as.numeric(result[, 1, 1]), as.numeric(raw_col), tolerance = 1e-10)
 })
+

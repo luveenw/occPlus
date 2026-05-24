@@ -58,7 +58,7 @@ The method is described in full in:
 ```{r install, eval = TRUE}
 # Install from GitHub (development version)
 # install.packages("remotes")
-# remotes::install_github("luveenw/occPlus@luveenw_test_plan_3")
+# remotes::install_github("AlexDiana/occPlus")
 ```
 
 `occPlus` links to [Stan](https://mc-stan.org/) through `rstan`. Make
@@ -163,7 +163,7 @@ Key checks before fitting:
 ```{r fit-minimal, eval = FALSE}
 fitmodel <- runOccPlus(
   data = sampledata,
-  d    = 2        # number of latent factors
+  d    = 2 # number of latent factors
 )
 ```
 
@@ -174,16 +174,13 @@ Covariates are specified by supplying column names from `data$info`.
 categorical ones into dummy variables.
 
 ```{r fit-covariates, eval = FALSE}
-print(sampledata$OTU)
 fitmodel <- runOccPlus(
   data            = sampledata,
   d               = 2,
-  occCovariates   = c("X_psi.1"),          # predictors of occupancy (ψ)
-  ordCovariates   = c("X_ord.1", "X_ord.2"),  # predictors of latent factors (U)
-  detCovariates   = c("X_theta")       # predictors of collection probability (θ)
+  occCovariates   = c("X_psi.1"), # predictors of occupancy (ψ)
+  ordCovariates   = c("X_ord.1", "X_ord.2"), # predictors of latent factors (U)
+  detCovariates   = c("X_theta") # predictors of collection probability (θ)
 )
-summary(sampledata$OTU)
-save(fitmodel, file = "../data/sampleresults.rda")
 ```
 
 The names in `occCovariates`, `ordCovariates`, and `detCovariates`
@@ -199,7 +196,7 @@ $\geq$ `threshold` is treated as a detection.
 fitmodel_bin <- runOccPlus(
   data      = sampledata,
   d         = 2,
-  threshold = 10   # reads >= 10 treated as detection
+  threshold = 10 # reads >= 10 treated as detection
 )
 ```
 
@@ -229,9 +226,7 @@ plots display **95% posterior credible intervals** by default.
 For the examples below we load the pre-computed results shipped with
 the package:
 
-```{r load-results}
-# LUVEEN TODO look into generating this on the fly? It should generate
-# in some reasonable amount of time
+```{r load-results, eval = FALSE}
 data("sampleresults")
 ```
 
@@ -241,14 +236,14 @@ data("sampleresults")
 dimensions (*iterations* × *sites* × *species*), containing the full
 posterior distribution of $\psi_{is}$.
 
-```{r occ-probs}
+```{r occ-probs, eval = FALSE}
 occProbs <- computeOccupancyProbs(fitmodel)
 str(occProbs)
 ```
 
 Visualise site-averaged occupancy rates across species:
 
-```{r plot-occ-rates}
+```{r plot-occ-rates, eval = FALSE}
 plotOccupancyRates(fitmodel, idx_species = 1:10)
 ```
 
@@ -259,36 +254,36 @@ plotOccupancyRates(fitmodel, idx_species = 1:10)
 Credible intervals that exclude zero (red horizontal line) indicate a
 statistically meaningful effect.
 
-```{r return-occ-covs}
+```{r return-occ-covs, eval = FALSE}
 occCovOutput <- returnOccupancyCovariates(fitmodel)
 # Array dimensions: [iterations, covariates, species]
 str(occCovOutput)
 ```
 
-```{r plot-occ-covs, eval = TRUE}
+```{r plot-occ-covs, eval = FALSE}
 # Replace "X_psi.1" with the name of your occupancy covariate
 plotOccupancyCovariates(fitmodel, covName = "X_psi.1", idx_species = 1:10)
 ```
 
 #### Ordination (latent factor) covariates
 
-```{r return-ord-covs}
+```{r return-ord-covs, eval = FALSE}
 ordCovOutput <- returnOrdinationCovariatesOutput(fitmodel)
 str(ordCovOutput)
 ```
 
-```{r plot-ord-covs, eval = TRUE}
+```{r plot-ord-covs, eval = FALSE}
 plotOrdinationCovariates(fitmodel, covName = "X_ord.1")
 ```
 
 #### Detection (collection) covariates
 
-```{r return-det-covs}
+```{r return-det-covs, eval = FALSE}
 detCovOutput <- returnDetectionCovariates(fitmodel)
 str(detCovOutput)
 ```
 
-```{r plot-det-covs, eval = TRUE}
+```{r plot-det-covs, eval = FALSE}
 plotDetectionCovariates(fitmodel, covName = "X_theta", idx_species = 1:10)
 ```
 
@@ -297,14 +292,14 @@ plotDetectionCovariates(fitmodel, covName = "X_theta", idx_species = 1:10)
 **Collection rate** — probability that an occupied site yields a
 positive sample, at average covariate values:
 
-```{r plot-collection}
+```{r plot-collection, eval = FALSE}
 plotCollectionRates(fitmodel, idx_species = 1:10)
 ```
 
 **Lab-stage true-positive rate** ($p_{ls}$) — probability that a
 positive replicate produces reads given a positive sample, per primer:
 
-```{r plot-detection}
+```{r plot-detection, eval = FALSE}
 plotDetectionRates(fitmodel, idx_species = 1:10)
 ```
 
@@ -313,14 +308,14 @@ plotDetectionRates(fitmodel, idx_species = 1:10)
 **Field-stage FP rate** ($\theta_{0s}$) — probability of a positive
 sample at an *unoccupied* site:
 
-```{r plot-stage1-fp}
+```{r plot-stage1-fp, eval = FALSE}
 plotStage1FPRates(fitmodel, idx_species = 1:10)
 ```
 
 **Lab-stage FP rate** ($q_{ls}$) — false-positive read rate per PCR
 replicate per primer:
 
-```{r plot-stage2-fp}
+```{r plot-stage2-fp, eval = FALSE}
 plotStage2FPRates(fitmodel, idx_species = 1:10)
 ```
 
@@ -331,7 +326,7 @@ The model estimates the log-read distributions for true positives
 (zero-inflated normal). The shaded bands show 80% and 95% credible
 envelopes.
 
-```{r plot-reads}
+```{r plot-reads, eval = FALSE}
 plotReadIntensity(fitmodel)
 ```
 
@@ -351,13 +346,13 @@ Note: this is the *residual* correlation matrix—it reflects associations
 **after** occupancy covariates have been accounted for, but **including**
 any shared environmental gradients captured by the ordination factors.
 
-```{r plot-cor}
+```{r plot-cor, eval = FALSE}
 plotCorrelationMatrix(fitmodel)
 ```
 
 Highlight only credible non-zero correlations (95% CI excluding zero):
 
-```{r plot-sig-cor}
+```{r plot-sig-cor, eval = FALSE}
 plotSigElementsCorMatrix(fitmodel)
 ```
 
@@ -373,7 +368,7 @@ candidate models.
 ```{r model-selection, eval = FALSE}
 library(loo)
 
-fitmodel_d0 <- runOccPlus(sampledata, d = 0)  # standard multi-species model
+fitmodel_d0 <- runOccPlus(sampledata, d = 0) # standard multi-species model
 fitmodel_d1 <- runOccPlus(sampledata, d = 1)
 fitmodel_d2 <- runOccPlus(sampledata, d = 2)
 fitmodel_d3 <- runOccPlus(sampledata, d = 3)

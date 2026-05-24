@@ -12,6 +12,8 @@ plotFPTPStage2Rates(fitmodel, idx_species = NULL, primerName = NULL)
 \item{fitmodel}{Output from the function runOccPlus}
 
 \item{idx_species}{Indexes of the species to be plotted (leave out to plot all the species).}
+
+\item{primerName}{Name of the primer to plot.}
 }
 \value{
 A ggplot object

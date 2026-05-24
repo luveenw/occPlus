@@ -8,10 +8,6 @@ returnOrdinationCovariatesOutput(fitmodel)
 }
 \arguments{
 \item{fitmodel}{Output from the function runOccPlus}
-
-\item{covName}{Name of the covariate to be plotted (same name as in data$info)}
-
-\item{idx_species}{Indexes of the species to be plotted (leave out to plot all the species).}
 }
 \value{
 A ggplot object

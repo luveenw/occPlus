@@ -10,6 +10,8 @@ plotSigElementsCorMatrix(fitmodel, idx_species = NULL)
 }
 \arguments{
 \item{fitmodel}{Output from the function runOccPlus}
+
+\item{idx_species}{Indexes of the species to be plotted (leave out to plot all the species).}
 }
 \value{
 A ggplot object

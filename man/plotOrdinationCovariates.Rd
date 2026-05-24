@@ -13,7 +13,7 @@ plotOrdinationCovariates(fitmodel, covName = NULL, idx_factors = NULL)
 
 \item{covName}{Name of the covariate to be plotted (same name as in data$info)}
 
-\item{idx_species}{Indexes of the species to be plotted (leave out to plot all the species).}
+\item{idx_factors}{Indexes of the factors to be plotted (leave out to plot all the factors).}
 }
 \value{
 A ggplot object

@@ -38,9 +38,64 @@ Names should match the column name in data$info.}
 
 \item{detCovariates}{vector of the name of the covariates for the detection probabilities.
 Names should match the column name in data$info.}
+
+\item{MCMCparams}{A list of MCMC parameters: \code{nchain} (number of chains),
+\code{nburn} (burn-in iterations), and \code{niter} (sampling iterations).}
 }
 \value{
-Description of the return value (e.g., a list, data frame, or numeric output).
+A named list with the following elements:
+\describe{
+  \item{results_output}{A named list of posterior sample arrays, one per
+    monitored parameter block. Each array has dimensions
+    [\emph{parameter indices}] \eqn{\times} \emph{niter} \eqn{\times}
+    \emph{nchain}, where \emph{niter} and \emph{nchain} are taken from
+    \code{MCMCparams}:
+    \describe{
+      \item{beta_psi_output}{Occupancy covariate coefficient draws,
+        array \code{[ncov_psi, S, niter, nchain]}.}
+      \item{beta_theta_output}{Detection covariate coefficient draws,
+        array \code{[ncov_theta, S, niter, nchain]}.}
+      \item{beta_ord_output}{Ordination covariate coefficient draws,
+        array \code{[ncov_ord, d, niter, nchain]}.}
+      \item{LL_output}{Factor loading draws,
+        array \code{[d, S, niter, nchain]}.}
+      \item{U_output}{Factor score draws,
+        array \code{[n_sites, d, niter, nchain]}.}
+      \item{E_output}{Residual factor score draws,
+        array \code{[n_sites, d, niter, nchain]}.}
+      \item{UL_output}{Product \eqn{U \Lambda^\top} draws
+        (contribution of latent factors to occupancy logit),
+        array \code{[n_sites, S, niter, nchain]}.}
+      \item{z_output}{Occupancy state draws (0/1),
+        array \code{[n_sites, S, niter, nchain]}.}
+      \item{p_output}{Lab-stage true-positive rate draws per species
+        (averaged across primers).}
+      \item{q_output}{Lab-stage false-positive rate draws per species
+        (averaged across primers).}
+      \item{theta0_output}{Field-stage false-positive probability draws,
+        matrix \code{[S, nchain]}.}
+      \item{mu1_output}{Mean log-read count for true-positive
+        replicates, vector of length \code{niter * nchain}.}
+      \item{sigma1_output}{Standard deviation of log-reads for
+        true-positive replicates.}
+      \item{mu0_output}{Mean log-read count for false-positive
+        replicates.}
+      \item{sigma0_output}{Standard deviation of log-reads for
+        false-positive replicates.}
+    }
+  }
+  \item{infos}{A named list of model dimensions and labels:
+    \code{S} (number of species), \code{d} (number of latent factors),
+    \code{ncov_psi}, \code{ncov_theta}, \code{ncov_ord} (covariate counts),
+    \code{speciesNames}, \code{siteNames}, \code{primerNames}, and
+    \code{maxexplogy1} (maximum observed log-read value).}
+  \item{X_psi}{Design matrix for occupancy covariates
+    (\emph{n_sites} \eqn{\times} \emph{ncov_psi}).}
+  \item{X_theta}{Design matrix for detection covariates
+    (\emph{n_replicates} \eqn{\times} \emph{ncov_theta}).}
+  \item{X_ord}{Design matrix for ordination covariates
+    (\emph{n_sites} \eqn{\times} \emph{ncov_ord}).}
+}
 }
 \description{
 Run the OccPlus model.
