@@ -23,8 +23,28 @@
 #' Names should match the column name in data$info.
 #' @param collCovariates vector of the name of the covariates for the collection probabilities.
 #' Names should match the column name in data$info.
+#' @param numSamples Number of posterior samples to retain.
 #'
-#' @return Description of the return value (e.g., a list, data frame, or numeric output).
+#' @return A named list with the following elements:
+#' \describe{
+#'   \item{vb_fit}{A \code{stanfit} object containing the full Stan sampler
+#'     output (posterior draws, diagnostics, and model metadata).}
+#'   \item{matrix_of_draws}{A numeric matrix of dimensions
+#'     \emph{iterations} \eqn{\times} \emph{parameters} containing all
+#'     monitored posterior samples. Column names identify each parameter
+#'     (e.g. \code{"beta_psi[1,1]"}, \code{"mu1"}).}
+#'   \item{infos}{A named list of model dimensions and labels:
+#'     \code{S} (number of species), \code{d} (number of latent factors),
+#'     \code{ncov_psi}, \code{ncov_theta}, \code{ncov_ord} (covariate counts),
+#'     \code{speciesNames}, \code{siteNames}, \code{primerNames}, and
+#'     \code{maxexplogy1} (maximum observed log-read value).}
+#'   \item{X_psi}{Design matrix for occupancy covariates
+#'     (\emph{n_sites} \eqn{\times} \emph{ncov_psi}).}
+#'   \item{X_theta}{Design matrix for detection covariates
+#'     (\emph{n_replicates} \eqn{\times} \emph{ncov_theta}).}
+#'   \item{X_ord}{Design matrix for ordination covariates
+#'     (\emph{n_sites} \eqn{\times} \emph{ncov_ord}).}
+#' }
 #'
 #' @examples
 #' \dontrun{

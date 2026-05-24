@@ -215,7 +215,7 @@ plotStage2FPRates(fitmodel, idx_species = 1:20)
 To compute occupancy probabilities at each site and for each species, we use
 the following function.
 
-```{r, eval = T}
+```{r occ-probs, eval = FALSE}
 occProbs <- computeOccupancyProbs(fitmodel)
 str(occProbs)
 ```
@@ -231,7 +231,7 @@ The output is stored in the form (*iterations* x *sites* x *species*).
 `occPlus` estimates a distribution of reads for true and false positives. We can
 plot the two distributions via:
 
-```{r plot-reads, fig.width=7, fig.height=4.5, warnings = FALSE}
+```{r plot-reads, fig.width=7, fig.height=4.5, warnings = FALSE, eval = FALSE}
 plotReadIntensity(fitmodel)
 ```
 
@@ -239,7 +239,7 @@ plotReadIntensity(fitmodel)
 
 We can plot the posterior median of the residual correlation matrix as
 
-```{r plot-cor}
+```{r plot-cor, eval = FALSE}
 plotCorrelationMatrix(fitmodel)
 ```
 
@@ -247,7 +247,7 @@ plotCorrelationMatrix(fitmodel)
 We can show only the positively and negatively significant elements (positive in
 red and negative in blue)
 
-```{r plot-sig-cor}
+```{r plot-sig-cor, eval = FALSE}
 plotSigElementsCorMatrix(fitmodel)
 ```
 
