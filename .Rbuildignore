@@ -6,3 +6,5 @@
 ^LICENSE\.md$
 ^dev$
 ^.*\.idea$
+^\.positai$
+^\.claude$
