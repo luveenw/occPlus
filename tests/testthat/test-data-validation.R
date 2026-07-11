@@ -25,12 +25,12 @@ minimal_data <- function() {
 
 test_that("missing $info element stops with error", {
   bad <- list(OTU = sampledata$OTU)
-  expect_error(runOccPlus(bad, d = 1))
+  expect_error(runOccPlus(bad))
 })
 
 test_that("missing $OTU element stops with error", {
   bad <- list(info = sampledata$info)
-  expect_error(runOccPlus(bad, d = 1))
+  expect_error(runOccPlus(bad))
 })
 
 # ---------------------------------------------------------------------------
@@ -41,7 +41,7 @@ test_that("NA in Site column stops with informative error", {
   bad <- minimal_data()
   bad$info$Site[1] <- NA
   expect_error(
-    runOccPlus(bad, d = 0),
+    runOccPlus(bad),
     regexp = "NA in Site"
   )
 })
@@ -50,7 +50,7 @@ test_that("NA in Sample column stops with informative error", {
   bad <- minimal_data()
   bad$info$Sample[1] <- NA
   expect_error(
-    runOccPlus(bad, d = 0),
+    runOccPlus(bad),
     regexp = "NA in Site, Sample or Primer"
   )
 })
@@ -59,7 +59,7 @@ test_that("NA in Primer column stops with informative error", {
   bad <- minimal_data()
   bad$info$Primer[1] <- NA
   expect_error(
-    runOccPlus(bad, d = 0),
+    runOccPlus(bad),
     regexp = "NA in Site, Sample or Primer"
   )
 })
@@ -70,21 +70,21 @@ test_that("NA in Primer column stops with informative error", {
 
 test_that("nonexistent occCovariates name stops with error", {
   expect_error(
-    runOccPlus(minimal_data(), d = 0, occCovariates = "does_not_exist"),
+    runOccPlus(minimal_data(), occCovariates = "does_not_exist"),
     regexp = "not in data"
   )
 })
 
 test_that("nonexistent detCovariates name stops with error", {
   expect_error(
-    runOccPlus(minimal_data(), d = 0, detCovariates = "does_not_exist"),
+    runOccPlus(minimal_data(), detCovariates = "does_not_exist"),
     regexp = "not in data"
   )
 })
 
 test_that("nonexistent ordCovariates name stops with error", {
   expect_error(
-    runOccPlus(minimal_data(), d = 1, ordCovariates = "does_not_exist"),
+    runOccPlus(minimal_data(), ordCovariates = "does_not_exist"),
     regexp = "not in data"
   )
 })
@@ -92,7 +92,7 @@ test_that("nonexistent ordCovariates name stops with error", {
 test_that("mix of valid and invalid covariate names stops with error", {
   expect_error(
     runOccPlus(
-      minimal_data(), d = 0,
+      minimal_data(),
       occCovariates = c("X_psi.1", "does_not_exist")
     ),
     regexp = "not in data"
@@ -107,7 +107,7 @@ test_that("mix of valid and invalid covariate names stops with error", {
 test_that("valid occCovariates name passes covariate validation", {
   skip_on_cran()  # May proceed to Stan compilation — too slow for CRAN
   result <- tryCatch(
-    runOccPlus(minimal_data(), d = 0, occCovariates = "X_psi.1"),
+    runOccPlus(minimal_data(), occCovariates = "X_psi.1"),
     error = function(e) e
   )
   # Should not be the covariate-name error — any other error (Stan) is fine
@@ -119,7 +119,7 @@ test_that("valid occCovariates name passes covariate validation", {
 test_that("valid detCovariates name passes covariate validation", {
   skip_on_cran()  # May proceed to Stan compilation — too slow for CRAN
   result <- tryCatch(
-    runOccPlus(minimal_data(), d = 0, detCovariates = "X_theta"),
+    runOccPlus(minimal_data(), detCovariates = "X_theta"),
     error = function(e) e
   )
   if (inherits(result, "error")) {
@@ -134,7 +134,7 @@ test_that("valid detCovariates name passes covariate validation", {
 test_that("threshold = FALSE (default) passes validation without error", {
   skip_on_cran()
   result <- tryCatch(
-    runOccPlus(minimal_data(), d = 0, threshold = FALSE),
+    runOccPlus(minimal_data(), threshold = FALSE),
     error = function(e) e
   )
   if (inherits(result, "error")) {
@@ -148,7 +148,7 @@ test_that("threshold = 0 does not fall through as FALSE (known behaviour)", {
   # behaviour so any change is deliberate.
   skip_on_cran()
   result <- tryCatch(
-    runOccPlus(minimal_data(), d = 0, threshold = 0),
+    runOccPlus(minimal_data(), threshold = 0),
     error = function(e) e
   )
   if (inherits(result, "error")) {
@@ -159,7 +159,7 @@ test_that("threshold = 0 does not fall through as FALSE (known behaviour)", {
 test_that("numeric threshold passes validation", {
   skip_on_cran()
   result <- tryCatch(
-    runOccPlus(minimal_data(), d = 0, threshold = 10),
+    runOccPlus(minimal_data(), threshold = 10),
     error = function(e) e
   )
   if (inherits(result, "error")) {
@@ -177,7 +177,7 @@ test_that("OTU matrix with NA values is accepted by validation", {
   d_na <- minimal_data()
   d_na$OTU[1, 1] <- NA
   result <- tryCatch(
-    runOccPlus(d_na, d = 0),
+    runOccPlus(d_na),
     error = function(e) e
   )
   if (inherits(result, "error")) {
@@ -188,7 +188,7 @@ test_that("OTU matrix with NA values is accepted by validation", {
 test_that("data with no covariates specified passes validation", {
   skip_on_cran()
   result <- tryCatch(
-    runOccPlus(minimal_data(), d = 0),
+    runOccPlus(minimal_data()),
     error = function(e) e
   )
   if (inherits(result, "error")) {
