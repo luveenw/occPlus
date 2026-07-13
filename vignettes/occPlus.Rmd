@@ -12,7 +12,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include = FALSE}
+```{r knitr_setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse   = TRUE,
   comment    = "#>",
@@ -33,6 +33,14 @@ simultaneously infers species occupancy probabilities, sample-level
 collection (detection) probabilities, and primer-level true- and
 false-positive read rates—all while accounting for residual species
 co-occurrence via a latent factor structure.
+
+The methodology is described in full in:
+
+> Ji Y, Diana A, Li X, Matechou E, Griffin JE, Liu S, *et al.* (2025).
+> High Quality, Granular, Timely, Trustworthy and Efficient Vertebrate
+> Species Distribution Data Across a 30,000 km² Protected Area Complex.
+> *Ecology Letters*, 28(12).
+> <https://doi.org/10.1111/ele.70302>
 
 ### When to use `occPlus`
 
