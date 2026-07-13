@@ -1,7 +1,16 @@
 # Prepare for CRAN ----
 # Source: https://github.com/ThinkR-open/prepare-for-cran
-# Update dependencies in DESCRIPTION
+
+# Usage
+# Execute this file line by line when preparing for a new release to
+# ensure that the package has a high probability to be accepted for
+# publishing to CRAN.
+
+# NOTE: Please follow the instructions in the comments closely.
+
+# Prerequisites
 # install.packages('attachment', repos = 'https://thinkr-open.r-universe.dev')
+# install.packages(c('FastGP','remotes','covr','withr','checkhelper','usethis','spelling','urlchecker','rhub',))
 
 # install required dependency for attachment package
 # install.packages("FastGP")
@@ -63,66 +72,7 @@ devtools::check_win_release()
 devtools::check_mac_release()
 
 # Check reverse dependencies
-remotes::install_github("r-lib/revdepcheck")
-usethis::use_git_ignore("revdep/")
-usethis::use_build_ignore("revdep/")
-# Check package coverage
-covr::package_coverage()
-covr::report()
-
-# Run tests
-devtools::test()
-testthat::test_dir("tests/testthat/")
-
-# Run examples
-devtools::run_examples()
-
-# autotest::autotest_package(test = TRUE)
-
-# Check package as CRAN using the correct CRAN repo
-withr::with_options(list(repos = c(CRAN = "https://cloud.r-project.org/")),
-                     {callr::default_repos()
-                         rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran")) })
-# devtools::check(args = c("--no-manual", "--as-cran"))
-
-# Check content
-# install.packages('checkhelper', repos = 'https://thinkr-open.r-universe.dev')
-# All functions must have either `@noRd` or an `@export`.
-checkhelper::find_missing_tags()
-
-# Check that you let the house clean after the check, examples and tests
-# If you used parallel testing, you may need to avoid it for the next check with `Config/testthat/parallel: false` in DESCRIPTION
-all_files_remaining <- checkhelper::check_clean_userspace()
-all_files_remaining
-# If needed, set back parallel testing with `Config/testthat/parallel: true` in DESCRIPTION
-
-# Check spelling - No typo
-usethis::use_spell_check()
-spelling::spell_check_package()
-
-# Check URL are correct
-# install.packages('urlchecker', repos = 'https://r-lib.r-universe.dev')
-urlchecker::url_check()
-urlchecker::url_update()
-
-# check on other distributions
-# _rhub v2
-rhub::rhub_setup() # Commit, push, merge
-rhub::rhub_doctor()
-rhub::rhub_platforms()
-rhub::rhub_check() # launch manually
-
-
-# _win devel CRAN
-devtools::check_win_devel()
-# _win release CRAN
-devtools::check_win_release()
-# _macos CRAN
-# Need to follow the URL proposed to see the results
-devtools::check_mac_release()
-
-# Check reverse dependencies
-remotes::install_github("r-lib/revdepcheck")
+# remotes::install_github("r-lib/revdepcheck")
 usethis::use_git_ignore("revdep/")
 usethis::use_build_ignore("revdep/")
 
