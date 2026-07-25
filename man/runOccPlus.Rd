@@ -6,11 +6,13 @@
 \usage{
 runOccPlus(
   data,
-  n_factors,
+  listParams = list(),
   threshold = 0,
   occCovariates = c(),
   ordCovariates = c(),
   collCovariates = c(),
+  spatCovariates = c(),
+  traitsMatrix = NULL,
   MCMCparams = list(nchain = 2, nburn = 5000, niter = 5000, nthin = 1),
   listPriors = list()
 )
@@ -23,8 +25,6 @@ runOccPlus(
   \item{OTU}{A matrix of dimension (N x S), where S is the number of species,
   with the number of reads of each species in each sample.}
 }}
-
-\item{n_factors}{Number of factors.}
 
 \item{threshold}{(Optional) threshold used to truncated the reads to binary data.
 Data greater than or equal to the threshold will be considered as detection.

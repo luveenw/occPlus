@@ -5,12 +5,44 @@ rpg <- function(n, z) {
     .Call(`_occPlus_rpg`, n, z)
 }
 
+rinvgamma_cpp <- function(a, b) {
+    .Call(`_occPlus_rinvgamma_cpp`, a, b)
+}
+
+isPointInBandRight <- function(X_tilde, x_grid, y_grid, i, j) {
+    .Call(`_occPlus_isPointInBandRight`, X_tilde, x_grid, y_grid, i, j)
+}
+
+isPointInBandLeft <- function(X_tilde, x_grid, y_grid, i, j) {
+    .Call(`_occPlus_isPointInBandLeft`, X_tilde, x_grid, y_grid, i, j)
+}
+
+isPointInBandUp <- function(X_tilde, x_grid, y_grid, i, j) {
+    .Call(`_occPlus_isPointInBandUp`, X_tilde, x_grid, y_grid, i, j)
+}
+
+isPointInBandDown <- function(X_tilde, x_grid, y_grid, i, j) {
+    .Call(`_occPlus_isPointInBandDown`, X_tilde, x_grid, y_grid, i, j)
+}
+
+findClosestPoint <- function(XY_sp, X_tilde) {
+    .Call(`_occPlus_findClosestPoint`, XY_sp, X_tilde)
+}
+
 dist_matrix <- function(coords) {
     .Call(`_occPlus_dist_matrix`, coords)
 }
 
 gpCovMatrix <- function(D, sigma2, rho) {
     .Call(`_occPlus_gpCovMatrix`, D, sigma2, rho)
+}
+
+K <- function(x1, x2, a, l) {
+    .Call(`_occPlus_K`, x1, x2, a, l)
+}
+
+K2 <- function(x1, x2, a, l) {
+    .Call(`_occPlus_K2`, x1, x2, a, l)
 }
 
 samplePGvariables <- function(Xbeta) {
@@ -55,5 +87,37 @@ sample_pq_cpp <- function(c_imk, w, primerIdx, idx_k, maxL, a_p, b_p, a_q, b_q) 
 
 computePsiOutput <- function(X_psi, beta_psi_output, X_ord, beta_ord_output, LL_output, conflevels) {
     .Call(`_occPlus_computePsiOutput`, X_psi, beta_psi_output, X_ord, beta_ord_output, LL_output, conflevels)
+}
+
+sampleBuniv <- function(X, B, b, y, sigma) {
+    .Call(`_occPlus_sampleBuniv`, X, B, b, y, sigma)
+}
+
+sampleB <- function(X, B, b, Omega, k) {
+    .Call(`_occPlus_sampleB`, X, B, b, Omega, k)
+}
+
+sample_U_cpp <- function(k, L, X, B, Omega, model) {
+    .Call(`_occPlus_sample_U_cpp`, k, L, X, B, Omega, model)
+}
+
+XsBs <- function(A, B, X_s_centers) {
+    .Call(`_occPlus_XsBs`, A, B, X_s_centers)
+}
+
+KsBproduct <- function(Ks, B, X_s_centers) {
+    .Call(`_occPlus_KsBproduct`, Ks, B, X_s_centers)
+}
+
+XtOmegaX_SoR <- function(X, X_centers, Omega, X_s_index, X_s_sor) {
+    .Call(`_occPlus_XtOmegaX_SoR`, X, X_centers, Omega, X_s_index, X_s_sor)
+}
+
+sampleB_SoR <- function(X, invB, b, k, Omega, X_s_index, Ks, X_centers) {
+    .Call(`_occPlus_sampleB_SoR`, X, invB, b, k, Omega, X_s_index, Ks, X_centers)
+}
+
+spatEffectMeanCpp <- function(Bs_output, Ks, Xs_centers) {
+    .Call(`_occPlus_spatEffectMeanCpp`, Bs_output, Ks, Xs_centers)
 }
 
